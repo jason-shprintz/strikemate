@@ -8,6 +8,22 @@ export interface LSApiResponse<T> {
   Errors: null;
 }
 
+/**
+ * The slugs needed to construct any LeagueSecretary URL.
+ * These appear in every page URL:
+ *   /bowling-centers/{centerSlug}/bowling-leagues/{leagueSlug}/{section}/{leagueId}
+ *
+ * Example for Sunday Fun Winter 25-26:
+ *   centerSlug: "sun-coast-hotel-casino"
+ *   leagueSlug: "sunday-fun-winter-2526"
+ *   leagueId:   131919
+ */
+export interface LSLeagueRef {
+  centerSlug: string;
+  leagueSlug: string;
+  leagueId: number;
+}
+
 export interface LSTeamStanding {
   TeamID: number;
   TeamNum: number;

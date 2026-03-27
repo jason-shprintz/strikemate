@@ -6,24 +6,44 @@ import {
   mapSeries,
   mapTeamStanding,
 } from "@strikemate/leaguesecretary-client";
+import type { LSLeagueRef } from "@strikemate/leaguesecretary-client";
 import type { LeagueId, WeekId } from "@strikemate/types";
 import { Router } from "express";
 
 export const leagueRouter = Router();
 
-// GET /league/:leagueId/standings
-// Returns current team standings mapped to domain types
-leagueRouter.get("/:leagueId/standings", async (req, res) => {
+/**
+ * All league routes require three query params that identify the league:
+ *   ?centerSlug=sun-coast-hotel-casino
+ *   &leagueSlug=sunday-fun-winter-2526
+ *   &leagueId=131919
+ *
+ * Example:
+ *   GET /league/standings?centerSlug=sun-coast-hotel-casino&leagueSlug=sunday-fun-winter-2526&leagueId=131919
+ */
+function parseLeagueRef(query: Record<string, unknown>): LSLeagueRef | null {
+  const { centerSlug, leagueSlug, leagueId } = query;
+  if (
+    typeof centerSlug !== "string" ||
+    typeof leagueSlug !== "string" ||
+    typeof leagueId !== "string" ||
+    isNaN(Number(leagueId))
+  ) {
+    return null;
+  }
+  return { centerSlug, leagueSlug, leagueId: Number(leagueId) };
+}
+
+// GET /league/standings?centerSlug=...&leagueSlug=...&leagueId=...
+leagueRouter.get("/standings", async (req, res) => {
+  const ref = parseLeagueRef(req.query as Record<string, unknown>);
+  if (!ref) {
+    res.status(400).json({ error: "Missing or invalid centerSlug, leagueSlug, or leagueId" });
+    return;
+  }
   try {
-    const leagueId = Number(req.params.leagueId);
-    if (isNaN(leagueId)) {
-      res.status(400).json({ error: "Invalid leagueId" });
-      return;
-    }
-    const raw = await fetchStandings(leagueId);
-    const standings = raw.map((s) =>
-      mapTeamStanding(s, String(leagueId) as LeagueId)
-    );
+    const raw = await fetchStandings(ref);
+    const standings = raw.map((s) => mapTeamStanding(s, String(ref.leagueId) as LeagueId));
     res.json(standings);
   } catch (err) {
     console.error(err);
@@ -31,19 +51,16 @@ leagueRouter.get("/:leagueId/standings", async (req, res) => {
   }
 });
 
-// GET /league/:leagueId/bowlers
-// Returns full bowler list mapped to domain types
-leagueRouter.get("/:leagueId/bowlers", async (req, res) => {
+// GET /league/bowlers?centerSlug=...&leagueSlug=...&leagueId=...
+leagueRouter.get("/bowlers", async (req, res) => {
+  const ref = parseLeagueRef(req.query as Record<string, unknown>);
+  if (!ref) {
+    res.status(400).json({ error: "Missing or invalid centerSlug, leagueSlug, or leagueId" });
+    return;
+  }
   try {
-    const leagueId = Number(req.params.leagueId);
-    if (isNaN(leagueId)) {
-      res.status(400).json({ error: "Invalid leagueId" });
-      return;
-    }
-    const raw = await fetchBowlerList(leagueId);
-    const bowlers = raw.map((b) =>
-      mapBowler(b, String(leagueId) as LeagueId)
-    );
+    const raw = await fetchBowlerList(ref);
+    const bowlers = raw.map((b) => mapBowler(b, String(ref.leagueId) as LeagueId));
     res.json(bowlers);
   } catch (err) {
     console.error(err);
@@ -51,21 +68,18 @@ leagueRouter.get("/:leagueId/bowlers", async (req, res) => {
   }
 });
 
-// GET /league/:leagueId/scores/:weekNumber
-// Returns all bowler series for a given week mapped to domain types
-leagueRouter.get("/:leagueId/scores/:weekNumber", async (req, res) => {
+// GET /league/scores/:weekNumber?centerSlug=...&leagueSlug=...&leagueId=...
+leagueRouter.get("/scores/:weekNumber", async (req, res) => {
+  const ref = parseLeagueRef(req.query as Record<string, unknown>);
+  const weekNumber = Number(req.params.weekNumber);
+  if (!ref || isNaN(weekNumber)) {
+    res.status(400).json({ error: "Missing or invalid params" });
+    return;
+  }
   try {
-    const leagueId = Number(req.params.leagueId);
-    const weekNumber = Number(req.params.weekNumber);
-    if (isNaN(leagueId) || isNaN(weekNumber)) {
-      res.status(400).json({ error: "Invalid leagueId or weekNumber" });
-      return;
-    }
-    const raw = await fetchWeekScores(leagueId, weekNumber);
-    const weekId = `${leagueId}-w${weekNumber}` as WeekId;
-    const series = raw.map((s) =>
-      mapSeries(s, String(leagueId) as LeagueId, weekId)
-    );
+    const raw = await fetchWeekScores(ref, weekNumber);
+    const weekId = `${ref.leagueId}-w${weekNumber}` as WeekId;
+    const series = raw.map((s) => mapSeries(s, String(ref.leagueId) as LeagueId, weekId));
     res.json(series);
   } catch (err) {
     console.error(err);
