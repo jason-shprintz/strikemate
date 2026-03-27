@@ -4,7 +4,7 @@ A modern bowling league management platform — a cross-platform replacement for
 
 ## Monorepo Structure
 
-```
+```bash
 strikemate/
   apps/
     api/        — Node.js/Express API server
