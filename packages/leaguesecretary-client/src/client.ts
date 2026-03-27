@@ -3,42 +3,68 @@ import type { LSApiResponse, LSBowler, LSLeagueRef, LSTeamStanding, LSWeekScore 
 const BASE_URL = "https://www.leaguesecretary.com";
 
 /**
- * Builds the base path for a league:
- *   /bowling-centers/{centerSlug}/bowling-leagues/{leagueSlug}
+ * Posts form-encoded data to a Kendo UI Read endpoint and returns Data[].
+ * All LS data endpoints follow this pattern.
  */
-function leaguePath(ref: LSLeagueRef): string {
-  return `/bowling-centers/${ref.centerSlug}/bowling-leagues/${ref.leagueSlug}`;
-}
+async function postLS<T>(path: string, body: Record<string, string | number>): Promise<T[]> {
+  const form = new URLSearchParams();
+  // Kendo UI grid always sends these pagination/sort params
+  form.set("sort", "");
+  form.set("page", "1");
+  form.set("pageSize", "1000");
+  form.set("group", "");
+  form.set("filter", "");
+  // Endpoint-specific params
+  for (const [key, value] of Object.entries(body)) {
+    form.set(key, String(value));
+  }
 
-async function fetchLS<T>(url: string): Promise<T[]> {
-  const res = await fetch(url);
+  const res = await fetch(`${BASE_URL}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: form.toString(),
+  });
+
   if (!res.ok) {
     throw new Error(
-      `LeagueSecretary API error: ${res.status} ${res.statusText} - ${url}`
+      `LeagueSecretary API error: ${res.status} ${res.statusText} - ${path}`
     );
   }
+
   const json = (await res.json()) as LSApiResponse<T>;
   if (json.Errors !== null) {
-    throw new Error(`LeagueSecretary API returned errors for ${url}`);
+    throw new Error(`LeagueSecretary API returned errors for ${path}`);
   }
   return json.Data;
 }
 
 export async function fetchStandings(ref: LSLeagueRef): Promise<LSTeamStanding[]> {
-  const url = `${BASE_URL}${leaguePath(ref)}/league/standings/${ref.leagueId}`;
-  return fetchLS<LSTeamStanding>(url);
+  return postLS<LSTeamStanding>("/League/InteractiveStandings_Read", {
+    leagueId: ref.leagueId,
+    year: ref.year,
+    season: ref.season,
+    weekNum: ref.weekNum,
+  });
 }
 
+// TODO: update once bowler list and summary endpoint names are confirmed from DevTools
 export async function fetchBowlerList(ref: LSLeagueRef): Promise<LSBowler[]> {
-  const url = `${BASE_URL}${leaguePath(ref)}/bowler/list/${ref.leagueId}`;
-  return fetchLS<LSBowler>(url);
+  return postLS<LSBowler>("/League/BowlerList_Read", {
+    leagueId: ref.leagueId,
+    year: ref.year,
+    season: ref.season,
+    weekNum: ref.weekNum,
+  });
 }
 
-// weekNumber is 1-based.
 export async function fetchWeekScores(
   ref: LSLeagueRef,
   weekNumber: number
 ): Promise<LSWeekScore[]> {
-  const url = `${BASE_URL}${leaguePath(ref)}/league/summary/${ref.leagueId}?week=${weekNumber}`;
-  return fetchLS<LSWeekScore>(url);
+  return postLS<LSWeekScore>("/League/Summary_Read", {
+    leagueId: ref.leagueId,
+    year: ref.year,
+    season: ref.season,
+    weekNum: weekNumber,
+  });
 }

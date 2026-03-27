@@ -13,32 +13,38 @@ import { Router } from "express";
 export const leagueRouter = Router();
 
 /**
- * All league routes require three query params that identify the league:
- *   ?centerSlug=sun-coast-hotel-casino
- *   &leagueSlug=sunday-fun-winter-2526
- *   &leagueId=131919
+ * All league routes require these query params:
+ *   ?leagueId=131919&year=2025&season=f&weekNum=26
  *
  * Example:
- *   GET /league/standings?centerSlug=sun-coast-hotel-casino&leagueSlug=sunday-fun-winter-2526&leagueId=131919
+ *   GET /league/standings?leagueId=131919&year=2025&season=f&weekNum=26
  */
 function parseLeagueRef(query: Record<string, unknown>): LSLeagueRef | null {
-  const { centerSlug, leagueSlug, leagueId } = query;
+  const { leagueId, year, season, weekNum } = query;
   if (
-    typeof centerSlug !== "string" ||
-    typeof leagueSlug !== "string" ||
     typeof leagueId !== "string" ||
-    isNaN(Number(leagueId))
+    typeof year !== "string" ||
+    typeof season !== "string" ||
+    typeof weekNum !== "string" ||
+    isNaN(Number(leagueId)) ||
+    isNaN(Number(year)) ||
+    isNaN(Number(weekNum))
   ) {
     return null;
   }
-  return { centerSlug, leagueSlug, leagueId: Number(leagueId) };
+  return {
+    leagueId: Number(leagueId),
+    year: Number(year),
+    season,
+    weekNum: Number(weekNum),
+  };
 }
 
-// GET /league/standings?centerSlug=...&leagueSlug=...&leagueId=...
+// GET /league/standings?leagueId=131919&year=2025&season=f&weekNum=26
 leagueRouter.get("/standings", async (req, res) => {
   const ref = parseLeagueRef(req.query as Record<string, unknown>);
   if (!ref) {
-    res.status(400).json({ error: "Missing or invalid centerSlug, leagueSlug, or leagueId" });
+    res.status(400).json({ error: "Required query params: leagueId, year, season, weekNum" });
     return;
   }
   try {
@@ -51,11 +57,11 @@ leagueRouter.get("/standings", async (req, res) => {
   }
 });
 
-// GET /league/bowlers?centerSlug=...&leagueSlug=...&leagueId=...
+// GET /league/bowlers?leagueId=131919&year=2025&season=f&weekNum=26
 leagueRouter.get("/bowlers", async (req, res) => {
   const ref = parseLeagueRef(req.query as Record<string, unknown>);
   if (!ref) {
-    res.status(400).json({ error: "Missing or invalid centerSlug, leagueSlug, or leagueId" });
+    res.status(400).json({ error: "Required query params: leagueId, year, season, weekNum" });
     return;
   }
   try {
@@ -68,12 +74,12 @@ leagueRouter.get("/bowlers", async (req, res) => {
   }
 });
 
-// GET /league/scores/:weekNumber?centerSlug=...&leagueSlug=...&leagueId=...
+// GET /league/scores/:weekNumber?leagueId=131919&year=2025&season=f&weekNum=26
 leagueRouter.get("/scores/:weekNumber", async (req, res) => {
   const ref = parseLeagueRef(req.query as Record<string, unknown>);
   const weekNumber = Number(req.params.weekNumber);
   if (!ref || isNaN(weekNumber)) {
-    res.status(400).json({ error: "Missing or invalid params" });
+    res.status(400).json({ error: "Required query params: leagueId, year, season, weekNum" });
     return;
   }
   try {

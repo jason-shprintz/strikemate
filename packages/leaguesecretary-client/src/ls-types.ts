@@ -9,19 +9,17 @@ export interface LSApiResponse<T> {
 }
 
 /**
- * The slugs needed to construct any LeagueSecretary URL.
- * These appear in every page URL:
- *   /bowling-centers/{centerSlug}/bowling-leagues/{leagueSlug}/{section}/{leagueId}
- *
- * Example for Sunday Fun Winter 25-26:
- *   centerSlug: "sun-coast-hotel-casino"
- *   leagueSlug: "sunday-fun-winter-2526"
- *   leagueId:   131919
+ * Identifies a league on LeagueSecretary.
+ * leagueId:   the numeric ID (e.g. 131919)
+ * year:       the season start year (e.g. 2025 for the 2025-26 season)
+ * season:     "f" for fall/winter, "s" for spring/summer (observed: "f")
+ * weekNum:    current/latest week number — used as default for score fetches
  */
 export interface LSLeagueRef {
-  centerSlug: string;
-  leagueSlug: string;
   leagueId: number;
+  year: number;
+  season: string;
+  weekNum: number;
 }
 
 export interface LSTeamStanding {
