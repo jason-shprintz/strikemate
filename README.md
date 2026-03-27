@@ -40,7 +40,7 @@ The API will start at `http://localhost:3001`.
 ### API Routes
 
 | Method | Path | Description |
-|--------|------|-------------|
+| ------ | ---- | ----------- |
 | `GET` | `/health` | Health check |
 | `GET` | `/league/:leagueId/standings` | Team standings |
 | `GET` | `/league/:leagueId/bowlers` | Full bowler list |
@@ -57,7 +57,7 @@ curl http://localhost:3001/league/131919/scores/1
 ## Useful Commands
 
 | Command | From | Description |
-|---------|------|-------------|
+| ------- | ---- | ----------- |
 | `npm install` | root | Install all workspace dependencies |
 | `npm run dev` | root | Start all apps in dev mode (via Turbo) |
 | `npm run build` | root | Build all packages and apps |
@@ -85,7 +85,7 @@ const scores    = await fetchWeekScores(131919, 1);
 ## Tech Stack
 
 | Layer | Technology |
-|-------|------------|
+| ----- | ---------- |
 | Monorepo | Turborepo |
 | Language | TypeScript |
 | API | Node.js + Express |
