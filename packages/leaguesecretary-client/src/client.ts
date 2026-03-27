@@ -38,6 +38,11 @@ async function postLS<T>(path: string, body: Record<string, string | number>): P
   return json.Data;
 }
 
+// Confirmed endpoints (from DevTools network tab):
+//   POST /League/InteractiveStandings_Read
+//   POST /Bowler/BowlerByWeekList_Read
+//   POST /League/Summary_Read
+
 export async function fetchStandings(ref: LSLeagueRef): Promise<LSTeamStanding[]> {
   return postLS<LSTeamStanding>("/League/InteractiveStandings_Read", {
     leagueId: ref.leagueId,
@@ -47,9 +52,8 @@ export async function fetchStandings(ref: LSLeagueRef): Promise<LSTeamStanding[]
   });
 }
 
-// TODO: update once bowler list and summary endpoint names are confirmed from DevTools
 export async function fetchBowlerList(ref: LSLeagueRef): Promise<LSBowler[]> {
-  return postLS<LSBowler>("/League/BowlerList_Read", {
+  return postLS<LSBowler>("/Bowler/BowlerByWeekList_Read", {
     leagueId: ref.leagueId,
     year: ref.year,
     season: ref.season,
