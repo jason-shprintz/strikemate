@@ -4,7 +4,7 @@ A modern bowling league management platform — a cross-platform replacement for
 
 ## Monorepo Structure
 
-```
+```bash
 strikemate/
   apps/
     api/        — Node.js/Express API server
@@ -42,7 +42,7 @@ The API will start at `http://localhost:3001`.
 All data routes require four query params that identify the league:
 
 | Param | Description | Example |
-|-------|-------------|---------|
+| ----- | ----------- | ------- |
 | `leagueId` | Numeric league ID | `131919` |
 | `year` | Season start year | `2025` |
 | `season` | `f` (fall/winter) or `s` (spring/summer) | `f` |
@@ -86,7 +86,7 @@ Shared TypeScript domain types used across all apps and packages. Source of trut
 Typed HTTP client for the LeagueSecretary.com API. All endpoints are confirmed POST requests to Kendo UI `_Read` actions:
 
 | Function | Endpoint |
-|----------|----------|
+| -------- | -------- |
 | `fetchStandings` | `POST /League/InteractiveStandings_Read` |
 | `fetchBowlerList` | `POST /Bowler/BowlerByWeekList_Read` |
 | `fetchWeekScores` | `POST /League/Summary_Read` |
