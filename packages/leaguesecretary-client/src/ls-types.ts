@@ -43,7 +43,7 @@ export interface LSBowler {
   HighScratchGame: number;
   HighScratchSeries: number;
   MostImproved: number;
-  BowlerPosition: number;       // 0 = sub, 1–4 = roster position
+  BowlerPosition: number;       // 0 = sub, 1-4 = roster position
   BowlerStatus: "R" | "T";     // R = regular, T = temporary/sub
   TeamNum: number;
   EnteringAverage: number;
@@ -73,7 +73,7 @@ export interface LSWeekScore {
   GameNum3: number;
   ScoreType3: LSScoreType;
   Score3: number;
-  // Games 4–6 exist in schema but are unused in standard 3-game leagues
+  // Games 4-6 exist in schema but are unused in standard 3-game leagues
   GameNum4: number;
   ScoreType4: LSScoreType;
   Score4: number;

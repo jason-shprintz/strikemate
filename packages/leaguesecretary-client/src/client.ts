@@ -6,7 +6,7 @@ async function fetchLS<T>(path: string): Promise<T[]> {
   const res = await fetch(`${BASE_URL}${path}`);
   if (!res.ok) {
     throw new Error(
-      `LeagueSecretary API error: ${res.status} ${res.statusText} — ${path}`
+      `LeagueSecretary API error: ${res.status} ${res.statusText} - ${path}`
     );
   }
   const json = (await res.json()) as LSApiResponse<T>;
@@ -25,7 +25,7 @@ export async function fetchBowlerList(leagueId: number): Promise<LSBowler[]> {
 }
 
 // weekNumber is 1-based. Verify the exact query string key against the
-// live network tab — may be ?week= or ?WeekNum= or similar.
+// live network tab - may be ?week= or ?WeekNum= or similar.
 export async function fetchWeekScores(
   leagueId: number,
   weekNumber: number

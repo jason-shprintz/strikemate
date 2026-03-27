@@ -10,7 +10,7 @@ import type {
 } from "@strikemate/types";
 import type { LSBowler, LSTeamStanding, LSWeekScore } from "./ls-types.js";
 
-// LS stores names as "LastName, FirstName" — normalize to "FirstName LastName"
+// LS stores names as "LastName, FirstName" - normalize to "FirstName LastName"
 function normalizeName(lsName: string): string {
   const commaIndex = lsName.indexOf(", ");
   if (commaIndex === -1) return lsName;
