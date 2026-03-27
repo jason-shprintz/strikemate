@@ -18,24 +18,28 @@ The market has 29,000+ USBC-certified leagues and 1M+ bowlers in the US, with vi
 ## Product Strategy
 
 ### Phase 1 — Bowler App (current focus)
+
 Read data from existing LeagueSecretary.com leagues. Build the bowler experience first — zero secretary friction required.
+
 - Standings, recaps, bowler averages, team stats
 - **Matchup Intelligence** (key differentiator): upcoming opponent preview, head-to-head history, "what do I need to bowl to raise my average?" calculator
 - Push notifications when scores are uploaded
 - Free tier + $0.99/month premium
 
 ### Phase 2 — Secretary Score Entry
+
 Let secretaries enter scores directly into StrikeMate. Eliminate the LeagueSecretary.com dependency.
 
 ### Phase 3 — Full BLS Replacement
-Complete handicap rules engine, financials, USBC sanctioning compliance, BLS data migration.
+
+Complete handicap rules engine, finances, USBC sanctioning compliance, BLS data migration.
 
 ---
 
 ## Tech Stack
 
 | Layer | Technology |
-|-------|------------|
+| ----- | ---------- |
 | Monorepo | Turborepo |
 | Language | TypeScript throughout |
 | API | Node.js + Express |
@@ -49,7 +53,7 @@ Complete handicap rules engine, financials, USBC sanctioning compliance, BLS dat
 
 ## Repo Structure
 
-```
+```bash
 strikemate/
   apps/
     api/        — Node.js/Express API server (port 3001)
@@ -65,6 +69,7 @@ strikemate/
 ## Key Technical Decisions
 
 ### LeagueSecretary.com API
+
 - The site is client-side rendered; data comes from internal POST endpoints
 - All data endpoints are **Kendo UI `_Read` actions**: `POST` with `application/x-www-form-urlencoded` body
 - Standard Kendo pagination params always required: `sort`, `page`, `pageSize`, `group`, `filter`
@@ -73,12 +78,13 @@ strikemate/
 **Confirmed endpoints:**
 
 | Data | Endpoint |
-|------|----------|
+| ---- | -------- |
 | Standings | `POST /League/InteractiveStandings_Read` |
 | Bowler list | `POST /Bowler/BowlerByWeekList_Read` |
 | Weekly scores | `POST /League/Summary_Read` |
 
 **Pilot league (for development/testing):**
+
 - Name: Sunday Fun Winter 25-26
 - Center: Sun Coast Hotel & Casino, Las Vegas NV
 - `leagueId`: `131919`
@@ -87,10 +93,12 @@ strikemate/
 - `weekNum`: `26` (as of March 2026)
 
 ### Domain Types (`@strikemate/types`)
+
 Branded ID types are used for type safety: `LeagueId`, `TeamId`, `BowlerId`, `WeekId`, `MatchupId`.
 All are strings at runtime but distinct types at compile time.
 
 ### LeagueSecretary Data Quirks
+
 - `BowlerStatus`: `"R"` = regular roster, `"T"` = temporary/sub
 - `TeamID: 0` = unrostered sub
 - `ScoreType`: `"S"` = actual score, `"A"` = absent (series totals will be 0), `"I"` = incomplete, `"0"` = unused game slot
@@ -102,12 +110,14 @@ All are strings at runtime but distinct types at compile time.
 ## Current State (as of March 2026)
 
 ### Done
+
 - [x] Turborepo monorepo scaffolded
 - [x] `@strikemate/types` — full domain model (League, Team, Bowler, Week, Series, Matchup, TeamStanding, HeadToHeadRecord, MatchupPreview)
 - [x] `@strikemate/leaguesecretary-client` — confirmed working against live league data
 - [x] `apps/api` — Express server with `/league/standings`, `/league/bowlers`, `/league/scores/:weekNumber` routes, all returning live data
 
 ### Up Next
+
 - [ ] `apps/mobile` — React Native app scaffold (Expo)
 - [ ] Standings screen
 - [ ] Bowler list screen
