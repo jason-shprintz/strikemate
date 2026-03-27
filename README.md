@@ -4,7 +4,7 @@ A modern bowling league management platform — a cross-platform replacement for
 
 ## Monorepo Structure
 
-```bash
+```
 strikemate/
   apps/
     api/        — Node.js/Express API server
@@ -39,19 +39,30 @@ The API will start at `http://localhost:3001`.
 
 ### API Routes
 
+All data routes require four query params that identify the league:
+
+| Param | Description | Example |
+|-------|-------------|---------|
+| `leagueId` | Numeric league ID | `131919` |
+| `year` | Season start year | `2025` |
+| `season` | `f` (fall/winter) or `s` (spring/summer) | `f` |
+| `weekNum` | Current/latest week number | `26` |
+
 | Method | Path | Description |
 | ------ | ---- | ----------- |
 | `GET` | `/health` | Health check |
-| `GET` | `/league/:leagueId/standings` | Team standings |
-| `GET` | `/league/:leagueId/bowlers` | Full bowler list |
-| `GET` | `/league/:leagueId/scores/:weekNumber` | Bowler series for a given week |
+| `GET` | `/league/standings` | Team standings |
+| `GET` | `/league/bowlers` | Full bowler list |
+| `GET` | `/league/scores/:weekNumber` | Bowler series for a given week |
 
-### Example — your league (ID: 131919)
+### Example — Sun Coast Sunday Fun Winter 25-26
 
 ```bash
-curl http://localhost:3001/league/131919/standings
-curl http://localhost:3001/league/131919/bowlers
-curl http://localhost:3001/league/131919/scores/1
+BASE="leagueId=131919&year=2025&season=f&weekNum=26"
+
+curl "http://localhost:3001/league/standings?$BASE"
+curl "http://localhost:3001/league/bowlers?$BASE"
+curl "http://localhost:3001/league/scores/26?$BASE"
 ```
 
 ## Useful Commands
@@ -72,14 +83,22 @@ Shared TypeScript domain types used across all apps and packages. Source of trut
 
 ### `@strikemate/leaguesecretary-client`
 
-Typed HTTP client for the LeagueSecretary.com API. Handles fetching and mapping raw LS responses to `@strikemate/types` domain objects.
+Typed HTTP client for the LeagueSecretary.com API. All endpoints are confirmed POST requests to Kendo UI `_Read` actions:
+
+| Function | Endpoint |
+|----------|----------|
+| `fetchStandings` | `POST /League/InteractiveStandings_Read` |
+| `fetchBowlerList` | `POST /Bowler/BowlerByWeekList_Read` |
+| `fetchWeekScores` | `POST /League/Summary_Read` |
 
 ```ts
 import { fetchStandings, fetchBowlerList, fetchWeekScores } from '@strikemate/leaguesecretary-client';
 
-const standings = await fetchStandings(131919);
-const bowlers   = await fetchBowlerList(131919);
-const scores    = await fetchWeekScores(131919, 1);
+const ref = { leagueId: 131919, year: 2025, season: 'f', weekNum: 26 };
+
+const standings = await fetchStandings(ref);
+const bowlers   = await fetchBowlerList(ref);
+const scores    = await fetchWeekScores(ref, 26);
 ```
 
 ## Tech Stack
