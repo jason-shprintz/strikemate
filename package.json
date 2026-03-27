@@ -1,0 +1,19 @@
+{
+  "name": "strikemate",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "typecheck": "turbo typecheck",
+    "clean:appledouble": "find . -type f -name '._*' -delete",
+    "cleanup": "npm run clean:appledouble && npm run format && npm run lint && npm test"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0",
+    "typescript": "^5.4.0"
+  }
+}
