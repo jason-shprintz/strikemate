@@ -1,0 +1,15 @@
+{
+  "enabled": true,
+  "name": "Generate Commit Message",
+  "description": "When triggered, runs git diff --staged and writes a commit message based on the staged changes",
+  "version": "1",
+  "when": {
+    "type": "userTriggered"
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "Run `git diff --staged` and write a concise conventional commit message for the staged changes. Output only the commit message, nothing else, but in a way where it's easy to copy and paste."
+  },
+  "workspaceFolderName": "strikemate",
+  "shortName": "generate-commit-message"
+}
