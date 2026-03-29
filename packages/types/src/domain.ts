@@ -54,6 +54,8 @@ export interface Bowler {
   id: BowlerId;
   leagueId: LeagueId;
   teamId: TeamId;
+  /** Denormalized for convenience — avoids a separate team lookup in list views */
+  teamName: string;
   name: string;
   enteringAverage?: number;
   currentAverage?: number;
@@ -102,6 +104,8 @@ export interface Series {
 
 export interface TeamStanding {
   teamId: TeamId;
+  /** Denormalized for convenience — avoids a separate team lookup in standings views */
+  teamName: string;
   leagueId: LeagueId;
   rank: number;
   wins: number;

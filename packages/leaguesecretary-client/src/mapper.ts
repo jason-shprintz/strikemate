@@ -29,6 +29,7 @@ export function mapBowler(ls: LSBowler, leagueId: LeagueId): Bowler {
     id: String(ls.BowlerID) as BowlerId,
     leagueId,
     teamId: String(ls.TeamID) as TeamId,
+    teamName: ls.TeamName,
     name: normalizeName(ls.BowlerName),
     enteringAverage: ls.EnteringAverage > 0 ? ls.EnteringAverage : undefined,
     currentAverage: ls.Average,
@@ -43,6 +44,7 @@ export function mapTeamStanding(
 ): TeamStanding {
   return {
     teamId: String(ls.TeamID) as TeamId,
+    teamName: ls.TeamName,
     leagueId,
     rank: ls.Place,
     wins: ls.PointsWonSplit,
