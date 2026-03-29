@@ -5,6 +5,7 @@ import {
   mapBowler,
   mapSeries,
   mapTeamStanding,
+  deriveMatchups,
 } from "@strikemate/leaguesecretary-client";
 import type { LSLeagueRef } from "@strikemate/leaguesecretary-client";
 import type { LeagueId, WeekId } from "@strikemate/types";
@@ -15,9 +16,6 @@ export const leagueRouter = Router();
 /**
  * All league routes require these query params:
  *   ?leagueId=131919&year=2025&season=f&weekNum=26
- *
- * Example:
- *   GET /league/standings?leagueId=131919&year=2025&season=f&weekNum=26
  */
 function parseLeagueRef(query: Record<string, unknown>): LSLeagueRef | null {
   const { leagueId, year, season, weekNum } = query;
@@ -90,5 +88,25 @@ leagueRouter.get("/scores/:weekNumber", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(502).json({ error: "Failed to fetch scores from LeagueSecretary" });
+  }
+});
+
+// GET /league/matchups/:weekNumber?leagueId=131919&year=2025&season=f&weekNum=26
+// Derives matchups by grouping bowlers by the lane they bowled on.
+leagueRouter.get("/matchups/:weekNumber", async (req, res) => {
+  const ref = parseLeagueRef(req.query as Record<string, unknown>);
+  const weekNumber = Number(req.params.weekNumber);
+  if (!ref || isNaN(weekNumber)) {
+    res.status(400).json({ error: "Required query params: leagueId, year, season, weekNum" });
+    return;
+  }
+  try {
+    const raw = await fetchWeekScores(ref, weekNumber);
+    const weekId = `${ref.leagueId}-w${weekNumber}` as WeekId;
+    const matchups = deriveMatchups(raw, String(ref.leagueId) as LeagueId, weekId);
+    res.json(matchups);
+  } catch (err) {
+    console.error(err);
+    res.status(502).json({ error: "Failed to derive matchups from LeagueSecretary" });
   }
 });
