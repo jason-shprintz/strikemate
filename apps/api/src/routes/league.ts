@@ -10,13 +10,14 @@ import {
 import type { LSLeagueRef } from "@strikemate/leaguesecretary-client";
 import type { LeagueId, WeekId } from "@strikemate/types";
 import { Router } from "express";
+import { cache, cacheKey, TTL } from "../cache.js";
 
 export const leagueRouter = Router();
 
 /**
  * Parses the league identity params shared by all routes.
  * weekNum is optional — routes that take :weekNumber as a path param
- * use that directly and don't need weekNum in the query string.
+ * use that directly and don\'t need weekNum in the query string.
  */
 function parseLeagueRef(
   query: Record<string, unknown>,
@@ -39,7 +40,6 @@ function parseLeagueRef(
     leagueId: Number(leagueId),
     year: Number(year),
     season,
-    // weekNum defaults to 0 when not required — callers override it with the path param
     weekNum: typeof weekNum === "string" ? Number(weekNum) : 0,
   };
 }
@@ -51,9 +51,18 @@ leagueRouter.get("/standings", async (req, res) => {
     res.status(400).json({ error: "Required query params: leagueId, year, season, weekNum" });
     return;
   }
+  const key = cacheKey("standings", ref.leagueId, ref.year, ref.season, ref.weekNum);
+  const cached = cache.get(key);
+  if (cached) {
+    res.setHeader("X-Cache", "HIT");
+    res.json(cached);
+    return;
+  }
   try {
     const raw = await fetchStandings(ref);
     const standings = raw.map((s) => mapTeamStanding(s, String(ref.leagueId) as LeagueId));
+    cache.set(key, standings, TTL.STANDINGS);
+    res.setHeader("X-Cache", "MISS");
     res.json(standings);
   } catch (err) {
     console.error(err);
@@ -68,9 +77,18 @@ leagueRouter.get("/bowlers", async (req, res) => {
     res.status(400).json({ error: "Required query params: leagueId, year, season, weekNum" });
     return;
   }
+  const key = cacheKey("bowlers", ref.leagueId, ref.year, ref.season, ref.weekNum);
+  const cached = cache.get(key);
+  if (cached) {
+    res.setHeader("X-Cache", "HIT");
+    res.json(cached);
+    return;
+  }
   try {
     const raw = await fetchBowlerList(ref);
     const bowlers = raw.map((b) => mapBowler(b, String(ref.leagueId) as LeagueId));
+    cache.set(key, bowlers, TTL.STANDINGS);
+    res.setHeader("X-Cache", "MISS");
     res.json(bowlers);
   } catch (err) {
     console.error(err);
@@ -87,10 +105,19 @@ leagueRouter.get("/scores/:weekNumber", async (req, res) => {
     res.status(400).json({ error: "Required query params: leagueId, year, season" });
     return;
   }
+  const key = cacheKey("scores", ref.leagueId, ref.year, ref.season, weekNumber);
+  const cached = cache.get(key);
+  if (cached) {
+    res.setHeader("X-Cache", "HIT");
+    res.json(cached);
+    return;
+  }
   try {
     const raw = await fetchWeekScores({ ...ref, weekNum: weekNumber }, weekNumber);
     const weekId = `${ref.leagueId}-w${weekNumber}` as WeekId;
     const series = raw.map((s) => mapSeries(s, String(ref.leagueId) as LeagueId, weekId));
+    cache.set(key, series, TTL.SCORES);
+    res.setHeader("X-Cache", "MISS");
     res.json(series);
   } catch (err) {
     console.error(err);
@@ -107,10 +134,19 @@ leagueRouter.get("/matchups/:weekNumber", async (req, res) => {
     res.status(400).json({ error: "Required query params: leagueId, year, season" });
     return;
   }
+  const key = cacheKey("matchups", ref.leagueId, ref.year, ref.season, weekNumber);
+  const cached = cache.get(key);
+  if (cached) {
+    res.setHeader("X-Cache", "HIT");
+    res.json(cached);
+    return;
+  }
   try {
     const raw = await fetchWeekScores({ ...ref, weekNum: weekNumber }, weekNumber);
     const weekId = `${ref.leagueId}-w${weekNumber}` as WeekId;
     const matchups = deriveMatchups(raw, String(ref.leagueId) as LeagueId, weekId);
+    cache.set(key, matchups, TTL.SCORES);
+    res.setHeader("X-Cache", "MISS");
     res.json(matchups);
   } catch (err) {
     console.error(err);
