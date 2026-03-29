@@ -21,9 +21,11 @@ import {
 } from 'react-native';
 
 // ─── Config ──────────────────────────────────────────────────────────────────
-// Your machine's local IP so the phone can reach the API over WiFi.
-const API_BASE = 'http://192.168.1.4:3001';
-const LEAGUE = 'leagueId=131919&year=2025&season=f&weekNum=26';
+// Falls back to local IP if env var is not set.
+// Set EXPO_PUBLIC_API_BASE in apps/mobile/.env.local to override.
+const API_BASE = process.env.EXPO_PUBLIC_API_BASE ?? 'http://192.168.1.4:3001';
+const LEAGUE =
+  process.env.EXPO_PUBLIC_LEAGUE_QUERY ?? 'leagueId=131919&year=2025&season=f&weekNum=26';
 
 // ─── Types (inline so this file has no external deps) ────────────────────────
 interface Standing {
@@ -37,20 +39,22 @@ interface Standing {
 
 interface Bowler {
   id: string;
+  teamId: string;
   name: string;
   teamName: string;
   currentAverage: number;
 }
 
 type Tab = 'standings' | 'bowlers';
-type Status = 'idle' | 'loading' | 'error';
+type Status = 'loading' | 'idle' | 'error';
 
 // ─── App ─────────────────────────────────────────────────────────────────────
 export default function App() {
   const [tab, setTab] = useState<Tab>('standings');
   const [standings, setStandings] = useState<Standing[]>([]);
   const [bowlers, setBowlers] = useState<Bowler[]>([]);
-  const [status, setStatus] = useState<Status>('idle');
+  // Initialize to 'loading' so we never flash an empty list on first render
+  const [status, setStatus] = useState<Status>('loading');
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -62,20 +66,42 @@ export default function App() {
     setStatus('loading');
     setError('');
 
-    fetch(url)
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    // AbortController cancels stale fetches when the tab changes before the
+    // previous request completes, preventing out-of-order state updates.
+    const controller = new AbortController();
+
+    fetch(url, { signal: controller.signal })
+      .then(async (r) => {
+        if (!r.ok) {
+          // Try to surface the API's JSON error message if available
+          let message = `HTTP ${r.status}`;
+          try {
+            const body = await r.json() as { error?: string };
+            if (typeof body.error === 'string') message = body.error;
+          } catch {
+            // Ignore JSON parse errors and fall back to status code message
+          }
+          throw new Error(message);
+        }
         return r.json();
       })
       .then((data) => {
-        if (tab === 'standings') setStandings(data as Standing[]);
-        else setBowlers((data as Bowler[]).filter((b) => b.teamName !== ''));
+        if (tab === 'standings') {
+          setStandings(data as Standing[]);
+        } else {
+          // Filter out unrostered subs — teamId "0" means no team assigned
+          setBowlers((data as Bowler[]).filter((b) => b.teamId !== '0'));
+        }
         setStatus('idle');
       })
       .catch((e: unknown) => {
+        // Ignore AbortError — it's an intentional cancellation, not a failure
+        if (e instanceof Error && e.name === 'AbortError') return;
         setError(e instanceof Error ? e.message : 'Unknown error');
         setStatus('error');
       });
+
+    return () => controller.abort();
   }, [tab]);
 
   return (
