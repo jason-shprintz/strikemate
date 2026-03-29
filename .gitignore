@@ -18,6 +18,7 @@ out/
 # OS
 .DS_Store
 Thumbs.db
+._*
 
 # Editors
 .vscode/
