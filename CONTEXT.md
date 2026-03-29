@@ -18,24 +18,28 @@ The market has 29,000+ USBC-certified leagues and 1M+ bowlers in the US, with vi
 ## Product Strategy
 
 ### Phase 1 — Bowler App (current focus)
+
 Read data from existing LeagueSecretary.com leagues. Build the bowler experience first — zero secretary friction required.
+
 - Standings, recaps, bowler averages, team stats
 - **Matchup Intelligence** (key differentiator): upcoming opponent preview, head-to-head history, "what do I need to bowl to raise my average?" calculator
 - Push notifications when scores are uploaded
 - Free tier + $0.99/month premium
 
 ### Phase 2 — Secretary Score Entry
+
 Let secretaries enter scores directly into StrikeMate. Eliminate the LeagueSecretary.com dependency.
 
 ### Phase 3 — Full BLS Replacement
-Complete handicap rules engine, financials, USBC sanctioning compliance, BLS data migration.
+
+Complete handicap rules engine, finances, USBC sanctioning compliance, BLS data migration.
 
 ---
 
 ## Tech Stack
 
 | Layer | Technology |
-|-------|------------|
+| ----- | ---------- |
 | Monorepo | Turborepo |
 | Language | TypeScript throughout |
 | API | Node.js + Express |
@@ -49,7 +53,7 @@ Complete handicap rules engine, financials, USBC sanctioning compliance, BLS dat
 
 ## Repo Structure
 
-```
+```bash
 strikemate/
   apps/
     api/        — Node.js/Express API server (port 3001) — WORKING
@@ -75,12 +79,13 @@ League is identified by four params: `leagueId`, `year`, `season` (`f`=fall/wint
 **Confirmed endpoints (verified from DevTools network tab):**
 
 | Data | Method + Endpoint |
-|------|-------------------|
+| ---- | ----------------- |
 | Standings | `POST /League/InteractiveStandings_Read` |
 | Bowler list | `POST /Bowler/BowlerByWeekList_Read` |
 | Weekly scores | `POST /League/Summary_Read` |
 
 **Pilot league (for development/testing):**
+
 - Name: Sunday Fun Winter 25-26
 - Center: Sun Coast Hotel & Casino, Las Vegas NV
 - `leagueId`: `131919`
@@ -89,9 +94,11 @@ League is identified by four params: `leagueId`, `year`, `season` (`f`=fall/wint
 - `weekNum`: `26` (as of March 2026)
 
 ### Domain Types (`@strikemate/types`)
+
 Branded ID types are used for type safety: `LeagueId`, `TeamId`, `BowlerId`, `WeekId`, `MatchupId`. All are strings at runtime but distinct types at compile time.
 
 ### LeagueSecretary Data Quirks
+
 - `BowlerStatus`: `"R"` = regular roster, `"T"` = temporary/sub
 - `TeamID: 0` = unrostered sub — filter these out in the mobile app
 - `ScoreType`: `"S"` = actual score bowled, `"A"` = absent (SeriesTotal will be 0), `"I"` = incomplete, `"0"` = unused game slot
@@ -104,6 +111,7 @@ Branded ID types are used for type safety: `LeagueId`, `TeamId`, `BowlerId`, `We
 ## Current State (as of March 27, 2026)
 
 ### Done
+
 - [x] Turborepo monorepo scaffolded with npm workspaces
 - [x] `@strikemate/types` — full domain model (League, Team, Bowler, Week, Series, Matchup, TeamStanding, HeadToHeadRecord, MatchupPreview)
 - [x] `@strikemate/leaguesecretary-client` — confirmed working against live league data (all 3 endpoints verified)
@@ -111,9 +119,11 @@ Branded ID types are used for type safety: `LeagueId`, `TeamId`, `BowlerId`, `We
 - [x] GitHub repo at jason-shprintz/strikemate, PR workflow established
 
 ### Open PRs
+
 - **PR #5** (`feat/mobile-scaffold`) — **DO NOT MERGE** — broken due to incorrect Expo/React Native package versions. See issue #6 for the correct path forward.
 
 ### Open Issues (prioritized order)
+
 - **#6** — Re-scaffold mobile from clean Expo 54 baseline using `create-expo-app` ← START HERE
 - **#7** — Add `teamName` to domain types and mapper (quick backend fix, unblocks screens)
 - **#13** — Document and formalize `EXPO_PUBLIC_API_URL` env var
@@ -145,6 +155,7 @@ curl "http://localhost:3001/league/scores/26?$BASE"
 ```
 
 ### Mobile app (once issue #6 is resolved)
+
 ```bash
 cd apps/mobile
 npm install
