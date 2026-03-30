@@ -12,7 +12,7 @@ export default function App() {
   const [tab, setTab] = useState<Tab>("standings");
 
   return (
-    <SafeAreaView style={styles.root}>
+    <SafeAreaView style={styles.root} edges={["top"]}>
       <StatusBar style="light" />
 
       {/* Header */}
@@ -58,7 +58,7 @@ export default function App() {
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg },
+  root: { flex: 1, backgroundColor: colors.bg, marginTop: 50 },
 
   header: {
     backgroundColor: colors.surface,
