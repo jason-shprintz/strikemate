@@ -39,25 +39,25 @@ Complete handicap rules engine, finances, USBC sanctioning compliance, BLS data 
 ## Tech Stack
 
 | Layer | Technology |
-| ----- | ---------- |
+| --- | --- |
 | Monorepo | Turborepo |
 | Language | TypeScript throughout |
 | API | Node.js + Express |
-| Mobile | React Native + Expo (see notes below) |
+| Mobile | React Native + Expo 54 |
 | Web | React (planned) |
 | Database | PostgreSQL (planned) |
 | Auth | OAuth / JWT (planned) |
-| Hosting | TBD (Railway / Render / Fly.io) |
+| Hosting | TBD (Railway / Render / Fly.io) — see issue #14 |
 
 ---
 
 ## Repo Structure
 
-```bash
+```text
 strikemate/
   apps/
     api/        — Node.js/Express API server (port 3001) — WORKING
-    mobile/     — React Native bowler app — IN PROGRESS (see issue #6)
+    mobile/     — React Native + Expo 54 bowler app — WORKING (proof-of-life screen)
     web/        — React web app (not yet started)
   packages/
     types/                    — Shared TypeScript domain types
@@ -78,8 +78,8 @@ League is identified by four params: `leagueId`, `year`, `season` (`f`=fall/wint
 
 **Confirmed endpoints (verified from DevTools network tab):**
 
-| Data | Method + Endpoint |
-| ---- | ----------------- |
+| Data | Endpoint |
+| --- | --- |
 | Standings | `POST /League/InteractiveStandings_Read` |
 | Bowler list | `POST /Bowler/BowlerByWeekList_Read` |
 | Weekly scores | `POST /League/Summary_Read` |
@@ -93,46 +93,67 @@ League is identified by four params: `leagueId`, `year`, `season` (`f`=fall/wint
 - `season`: `f`
 - `weekNum`: `26` (as of March 2026)
 
+### API Route Design
+
+`weekNum` is required for `/standings` and `/bowlers` (it's passed to the LS API).
+For `/scores/:weekNumber` and `/matchups/:weekNumber`, the path param is the source of truth — `weekNum` is optional in the query string for those routes.
+
+### Caching
+
+`apps/api` has an in-memory TTL cache (`src/cache.ts`):
+
+- `Cache` class backed by a `Map` with `MAX_SIZE = 500` (oldest-entry eviction)
+- In-flight promise coalescing via `getOrFetch()` — prevents cache stampedes
+- TTLs: 1 hour for standings/bowlers, 10 minutes for scores/matchups
+- Expired entries purged every 5 minutes via `setInterval(...).unref()`
+- `X-Cache: HIT / MISS / BYPASS` header on all responses
+
+### Matchup Derivation
+
+Matchups are derived from weekly score data — no dedicated LS endpoint needed. `LaneBowledOn` on each `LSWeekScore` row tells us what lane each bowler bowled on. Teams on the same cross-lane pair (odd + odd+1) played each other. Logic lives in `packages/leaguesecretary-client/src/matchups.ts`.
+
 ### Domain Types (`@strikemate/types`)
 
 Branded ID types are used for type safety: `LeagueId`, `TeamId`, `BowlerId`, `WeekId`, `MatchupId`. All are strings at runtime but distinct types at compile time.
 
+`teamName` is denormalized onto both `Bowler` and `TeamStanding` for convenience in list views — avoids a separate team lookup.
+
 ### LeagueSecretary Data Quirks
 
 - `BowlerStatus`: `"R"` = regular roster, `"T"` = temporary/sub
-- `TeamID: 0` = unrostered sub — filter these out in the mobile app
+- `TeamID: 0` = unrostered sub — filter these out in the mobile app using `teamId !== "0"`
 - `ScoreType`: `"S"` = actual score bowled, `"A"` = absent (SeriesTotal will be 0), `"I"` = incomplete, `"0"` = unused game slot
 - Names stored as `"LastName, FirstName"` — mapper normalizes to `"FirstName LastName"`
 - `HandicapBeforeBowling` is the **per-game** handicap — multiply by 3 for series handicap
-- `LaneBowledOn` can be used to reconstruct matchups: teams on the same cross-lane pair played each other that week
+
+### Mobile App
+
+- Expo 54, React Native 0.81, React 19
+- Entry point: `apps/mobile/App.tsx` (no Expo Router yet — plain React Native navigation coming in issue #10)
+- Environment config via `EXPO_PUBLIC_*` env vars — see `apps/mobile/.env.example`
+- On a physical device, `EXPO_PUBLIC_API_BASE` must be your machine's local IP (not localhost)
+- Find local IP on Mac: `ipconfig getifaddr en0`
 
 ---
 
-## Current State (as of March 27, 2026)
+## Current State (as of March 30, 2026)
 
 ### Done
 
 - [x] Turborepo monorepo scaffolded with npm workspaces
-- [x] `@strikemate/types` — full domain model (League, Team, Bowler, Week, Series, Matchup, TeamStanding, HeadToHeadRecord, MatchupPreview)
-- [x] `@strikemate/leaguesecretary-client` — confirmed working against live league data (all 3 endpoints verified)
-- [x] `apps/api` — Express server, all three routes returning live data confirmed working
-- [x] GitHub repo at jason-shprintz/strikemate, PR workflow established
-
-### Open PRs
-
-- **PR #5** (`feat/mobile-scaffold`) — **DO NOT MERGE** — broken due to incorrect Expo/React Native package versions. See issue #6 for the correct path forward.
+- [x] `@strikemate/types` — full domain model with `teamName` on `Bowler` and `TeamStanding`
+- [x] `@strikemate/leaguesecretary-client` — all 3 endpoints confirmed working, matchup derivation added
+- [x] `apps/api` — all routes working with caching: `/standings`, `/bowlers`, `/scores/:weekNumber`, `/matchups/:weekNumber`
+- [x] `apps/mobile` — Expo 54 scaffold working in Expo Go, proof-of-life screen shows live standings and bowlers
+- [x] `apps/mobile/.env.example` — documents `EXPO_PUBLIC_API_BASE` and `EXPO_PUBLIC_LEAGUE_QUERY`
+- [x] GitHub repo at `jason-shprintz/strikemate`, PR workflow established with Copilot reviews
 
 ### Open Issues (prioritized order)
 
-- **#6** — Re-scaffold mobile from clean Expo 54 baseline using `create-expo-app` ← START HERE
-- **#7** — Add `teamName` to domain types and mapper (quick backend fix, unblocks screens)
-- **#13** — Document and formalize `EXPO_PUBLIC_API_URL` env var
-- **#10** — Standings and bowler list screens (depends on #6 and #7)
-- **#8** — Derive matchups from weekly scores via `LaneBowledOn` grouping
-- **#9** — Add in-memory caching to apps/api
-- **#11** — Weekly recap screen (depends on #8)
-- **#12** — Matchup Intelligence screen — the killer feature (depends on #8 and #11)
-- **#14** — Deploy apps/api to production hosting
+- **#10** — Proper standings and bowler list screens with pull-to-refresh and sort toggle ← START HERE
+- **#11** — Weekly recap screen (depends on matchup derivation — already done in #8)
+- **#12** — Matchup Intelligence screen — the killer feature (depends on #11)
+- **#14** — Deploy `apps/api` to production hosting (Railway / Render / Fly.io)
 
 ---
 
@@ -151,26 +172,29 @@ npm run dev
 BASE="leagueId=131919&year=2025&season=f&weekNum=26"
 curl "http://localhost:3001/league/standings?$BASE"
 curl "http://localhost:3001/league/bowlers?$BASE"
-curl "http://localhost:3001/league/scores/26?$BASE"
+curl "http://localhost:3001/league/scores/26?leagueId=131919&year=2025&season=f"
+curl "http://localhost:3001/league/matchups/26?leagueId=131919&year=2025&season=f"
 ```
 
-### Mobile app (once issue #6 is resolved)
+### Mobile app
 
 ```bash
 cd apps/mobile
-npm install
-# On physical device, set your machine's local IP:
-EXPO_PUBLIC_API_URL=http://<your-ip>:3001 npx expo start
-# Find your IP on Mac: ipconfig getifaddr en0
+cp .env.example .env.local
+# Edit .env.local — set EXPO_PUBLIC_API_BASE to your machine's local IP
+npx expo start
+# Scan QR code with Expo Go
 ```
 
 ---
 
 ## Development Conventions
 
-- All PRs target `master`
+- All PRs branch from latest `master` and target `master`
 - Branch naming: `feat/`, `fix/`, `docs/`, `chore/`
 - TypeScript strict mode + `noUncheckedIndexedAccess` everywhere
 - Raw LS API types live in `ls-types.ts` and never leak into app code — always map through `mapper.ts` first
 - Commit messages follow conventional commits (`feat:`, `fix:`, `docs:`, `chore:`)
-- **Never guess package versions** — always use official tooling (e.g. `npx expo install`) or verify against official compatibility tables before writing dependency versions
+- All Markdown files must pass markdownlint: code fences require a language identifier, table cells require spaces around pipes (`| --- |`)
+- **Never guess package versions** — always verify against official compatibility tables or use official tooling (e.g. `npx expo install`)
+- Copilot reviews all PRs automatically — address comments before merging
