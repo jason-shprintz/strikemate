@@ -14,10 +14,11 @@
     "cleanup": "npm run clean:appledouble && npm run format && npm run lint && npm test"
   },
   "devDependencies": {
+    "react": "19.1.0",
     "turbo": "^2.0.0",
     "typescript": "^5.4.0"
   },
-  "dependencies": {
-    "react-native-safe-area-context": "~5.6.2"
+  "overrides": {
+    "react": "19.1.0"
   }
 }
