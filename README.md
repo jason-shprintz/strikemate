@@ -4,7 +4,7 @@ A modern bowling league management platform — a cross-platform replacement for
 
 ## Monorepo Structure
 
-```
+```text
 strikemate/
   apps/
     api/        — Node.js/Express API server
@@ -42,14 +42,14 @@ The API will start at `http://localhost:3001`.
 All data routes require these query params:
 
 | Param | Description | Example |
-|-------|-------------|--------|
+| --- | --- | --- |
 | `leagueId` | Numeric league ID | `131919` |
 | `year` | Season start year | `2025` |
 | `season` | `f` (fall/winter) or `s` (spring/summer) | `f` |
 | `weekNum` | Current/latest week number (required for standings/bowlers, optional for `:weekNumber` routes) | `26` |
 
 | Method | Path | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | `GET` | `/health` | Health check |
 | `GET` | `/league/standings` | Team standings |
 | `GET` | `/league/bowlers` | Full bowler list |
@@ -88,7 +88,8 @@ ipconfig  # look for IPv4 Address
 ```
 
 Example `.env.local`:
-```
+
+```dotenv
 EXPO_PUBLIC_API_BASE=http://192.168.1.4:3001
 EXPO_PUBLIC_LEAGUE_QUERY=leagueId=131919&year=2025&season=f&weekNum=26
 ```
@@ -112,7 +113,7 @@ Scan the QR code with the **Expo Go** app on your phone. Both should be on the s
 ## Useful Commands
 
 | Command | From | Description |
-|---------|------|-------------|
+| --- | --- | --- |
 | `npm install` | root | Install all workspace dependencies |
 | `npm run dev` | root | Start all apps in dev mode (via Turbo) |
 | `npm run build` | root | Build all packages and apps |
@@ -131,7 +132,7 @@ Shared TypeScript domain types used across all apps and packages. Source of trut
 Typed HTTP client for the LeagueSecretary.com API. All endpoints are confirmed POST requests to Kendo UI `_Read` actions:
 
 | Function | Endpoint |
-|----------|----------|
+| --- | --- |
 | `fetchStandings` | `POST /League/InteractiveStandings_Read` |
 | `fetchBowlerList` | `POST /Bowler/BowlerByWeekList_Read` |
 | `fetchWeekScores` | `POST /League/Summary_Read` |
@@ -149,7 +150,7 @@ const scores    = await fetchWeekScores(ref, 26);
 ## Tech Stack
 
 | Layer | Technology |
-|-------|------------|
+| --- | --- |
 | Monorepo | Turborepo |
 | Language | TypeScript |
 | API | Node.js + Express |
