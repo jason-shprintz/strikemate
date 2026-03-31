@@ -9,3 +9,12 @@ export const API_BASE =
 export const LEAGUE_QUERY =
   process.env.EXPO_PUBLIC_LEAGUE_QUERY ??
   "leagueId=131919&year=2025&season=f&weekNum=26";
+
+/**
+ * The current/default week number parsed from LEAGUE_QUERY.
+ * Used as the initial week in the weekly recap screen.
+ */
+export const DEFAULT_WEEK = (() => {
+  const match = LEAGUE_QUERY.match(/(?:^|&)weekNum=(\d+)/);
+  return match ? Number(match[1]) : 1;
+})();
