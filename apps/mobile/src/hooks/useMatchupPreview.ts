@@ -1,52 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
+import type { Bowler, HeadToHeadRecord, MatchupPreview, Team } from "@strikemate/types";
 import { API_BASE, LEAGUE_QUERY } from "../config";
 
-// ─── Public Types ─────────────────────────────────────────────────────────────
+// ─── Re-exports for screen consumption ───────────────────────────────────────
 
-export interface MatchupTeam {
-  id: string;
-  name: string;
-}
+export type MatchupPreviewData = MatchupPreview;
+export type MatchupBowler = Bowler;
+export type MatchupTeam = Team;
+export type { HeadToHeadRecord };
 
-export interface MatchupBowler {
-  id: string;
-  name: string;
-  teamId: string;
-  currentAverage?: number;
-  enteringAverage?: number;
-  totalPins: number;
-  totalGames: number;
-}
-
-export interface HeadToHeadRecord {
-  teamAId: string;
-  teamBId: string;
-  teamAWins: number;
-  teamBWins: number;
-  meetings: Array<{
-    weekId: string;
-    teamAPoints: number;
-    teamBPoints: number;
-  }>;
-}
-
-export interface MatchupPreviewData {
-  matchup: {
-    id: string;
-    lanes: [number, number];
-    homeTeamId: string;
-    awayTeamId: string;
-  };
-  homeTeam: MatchupTeam;
-  awayTeam: MatchupTeam;
-  homeBowlers: MatchupBowler[];
-  awayBowlers: MatchupBowler[];
-  headToHead: HeadToHeadRecord;
-  recentForm: {
-    homeTeamPoints: number[];
-    awayTeamPoints: number[];
-  };
-}
+// ─── Status / result ─────────────────────────────────────────────────────────
 
 export type FetchStatus = "loading" | "idle" | "error" | "not-found";
 
@@ -70,6 +33,14 @@ export function useMatchupPreview(
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
+  // Clear stale preview when the query changes (teamId or weekNum) so the
+  // full-screen spinner is shown. Pull-to-refresh (refreshKey increment only)
+  // intentionally preserves existing preview so the RefreshControl spinner
+  // appears over existing content — matching the pattern in useWeekScores.
+  useEffect(() => {
+    setPreview(null);
+  }, [teamId, weekNum]);
+
   useEffect(() => {
     if (!teamId) {
       setStatus("idle");
@@ -79,7 +50,6 @@ export function useMatchupPreview(
 
     setStatus("loading");
     setError("");
-    setPreview(null);
 
     const controller = new AbortController();
 
@@ -87,11 +57,9 @@ export function useMatchupPreview(
     params.set("weekNum", String(weekNum));
     params.set("teamId", teamId);
     const url = `${API_BASE}/league/matchup-preview?${params.toString()}`;
-    console.log("[useMatchupPreview] fetching:", url);
 
     fetch(url, { signal: controller.signal })
       .then(async (r) => {
-        console.log("[useMatchupPreview] response status:", r.status);
         if (!r.ok) {
           let message = `HTTP ${r.status}`;
           try {
@@ -110,9 +78,7 @@ export function useMatchupPreview(
       })
       .catch((e: unknown) => {
         if (e instanceof Error && e.name === "AbortError") return;
-        const msg = e instanceof Error ? e.message : "Unknown error";
-        console.log("[useMatchupPreview] error:", msg, e);
-        setError(msg);
+        setError(e instanceof Error ? e.message : "Unknown error");
         setStatus(
           (e as { status?: number }).status === 404 ? "not-found" : "error",
         );

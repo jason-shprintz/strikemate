@@ -76,9 +76,6 @@ function OpponentCard({
   preview: MatchupPreviewData;
   isHome: boolean;
 }) {
-  const myTeamId = isHome
-    ? preview.matchup.homeTeamId
-    : preview.matchup.awayTeamId;
   const oppTeam = isHome ? preview.awayTeam : preview.homeTeam;
   const oppBowlers = isHome ? preview.awayBowlers : preview.homeBowlers;
   const oppPoints = isHome
@@ -87,8 +84,6 @@ function OpponentCard({
   const myPoints = isHome
     ? preview.recentForm.homeTeamPoints
     : preview.recentForm.awayTeamPoints;
-
-  void myTeamId; // used for context only
 
   const activeOppBowlers = oppBowlers.filter(
     (b) => b.currentAverage !== undefined && b.currentAverage > 0,
@@ -268,10 +263,16 @@ function AverageCalculatorCard({
   isHome: boolean;
 }) {
   const myBowlers = isHome ? preview.homeBowlers : preview.awayBowlers;
-  const [selectedIdx, setSelectedIdx] = useState(0);
+  const [selectedBowlerId, setSelectedBowlerId] = useState<string | null>(null);
   const [targetInput, setTargetInput] = useState("");
 
-  const bowler = myBowlers[selectedIdx];
+  // Find the selected bowler by ID, falling back to the first bowler. This
+  // gracefully handles week navigation where the bowler list may change.
+  const bowler =
+    (selectedBowlerId
+      ? myBowlers.find((b) => b.id === selectedBowlerId)
+      : null) ?? myBowlers[0];
+
   if (!bowler || bowler.totalGames === 0) return null;
 
   const currentAvg =
@@ -290,22 +291,22 @@ function AverageCalculatorCard({
         showsHorizontalScrollIndicator={false}
         style={styles.selectorScroll}
       >
-        {myBowlers.map((b, i) => (
+        {myBowlers.map((b) => (
           <TouchableOpacity
             key={b.id}
             style={[
               styles.selectorBtn,
-              i === selectedIdx && styles.selectorBtnActive,
+              b.id === bowler.id && styles.selectorBtnActive,
             ]}
             onPress={() => {
-              setSelectedIdx(i);
+              setSelectedBowlerId(b.id);
               setTargetInput("");
             }}
           >
             <Text
               style={[
                 styles.selectorBtnText,
-                i === selectedIdx && styles.selectorBtnTextActive,
+                b.id === bowler.id && styles.selectorBtnTextActive,
               ]}
               numberOfLines={1}
             >
@@ -441,13 +442,13 @@ export function MatchupIntelligenceScreen() {
           <ActivityIndicator size="large" color={colors.accent} />
           <Text style={styles.loadingText}>Loading matchup intelligence…</Text>
         </View>
+      ) : status === "not-found" ? (
+        <View style={styles.centered}>
+          <Text style={styles.emptyText}>No matchup scheduled for week {week}</Text>
+        </View>
       ) : status === "error" ? (
         <View style={styles.centered}>
-          <Text style={styles.errorText}>
-            {error.includes("No matchup found")
-              ? "No matchup this week"
-              : "Failed to load"}
-          </Text>
+          <Text style={styles.errorText}>Failed to load</Text>
           <Text style={styles.errorDetail}>{error}</Text>
         </View>
       ) : preview ? (
