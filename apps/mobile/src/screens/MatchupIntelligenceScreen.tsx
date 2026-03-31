@@ -9,8 +9,16 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { DEFAULT_WEEK, HANDICAP_BASIS, HANDICAP_PERCENT, MY_TEAM_ID } from "../config";
-import type { MatchupBowler, MatchupPreviewData } from "../hooks/useMatchupPreview";
+import {
+  DEFAULT_WEEK,
+  HANDICAP_BASIS,
+  HANDICAP_PERCENT,
+  MY_TEAM_ID,
+} from "../config";
+import type {
+  MatchupBowler,
+  MatchupPreviewData,
+} from "../hooks/useMatchupPreview";
 import { useMatchupPreview } from "../hooks/useMatchupPreview";
 import { colors } from "../theme";
 
@@ -22,7 +30,11 @@ function handicapFor(avg: number): number {
 }
 
 /** How many pins needed to achieve a new average after one more series (3 games). */
-function pinsNeeded(totalPins: number, totalGames: number, targetAvg: number): number {
+function pinsNeeded(
+  totalPins: number,
+  totalGames: number,
+  targetAvg: number,
+): number {
   return Math.ceil(targetAvg * (totalGames + 3) - totalPins);
 }
 
@@ -41,7 +53,14 @@ function FormDots({ points }: { points: number[] }) {
   return (
     <View style={styles.formRow}>
       {points.map((p, i) => (
-        <View key={i} style={[styles.formDot, p >= 3 && styles.formDotGood, p <= 1 && styles.formDotBad]}>
+        <View
+          key={i}
+          style={[
+            styles.formDot,
+            p >= 3 && styles.formDotGood,
+            p <= 1 && styles.formDotBad,
+          ]}
+        >
           <Text style={styles.formDotText}>{p}</Text>
         </View>
       ))}
@@ -57,20 +76,28 @@ function OpponentCard({
   preview: MatchupPreviewData;
   isHome: boolean;
 }) {
-  const myTeamId = isHome ? preview.matchup.homeTeamId : preview.matchup.awayTeamId;
+  const myTeamId = isHome
+    ? preview.matchup.homeTeamId
+    : preview.matchup.awayTeamId;
   const oppTeam = isHome ? preview.awayTeam : preview.homeTeam;
   const oppBowlers = isHome ? preview.awayBowlers : preview.homeBowlers;
-  const oppPoints = isHome ? preview.recentForm.awayTeamPoints : preview.recentForm.homeTeamPoints;
-  const myPoints = isHome ? preview.recentForm.homeTeamPoints : preview.recentForm.awayTeamPoints;
+  const oppPoints = isHome
+    ? preview.recentForm.awayTeamPoints
+    : preview.recentForm.homeTeamPoints;
+  const myPoints = isHome
+    ? preview.recentForm.homeTeamPoints
+    : preview.recentForm.awayTeamPoints;
 
   void myTeamId; // used for context only
 
-  const activeOppBowlers = oppBowlers.filter((b) => b.currentAverage !== undefined && b.currentAverage > 0);
+  const activeOppBowlers = oppBowlers.filter(
+    (b) => b.currentAverage !== undefined && b.currentAverage > 0,
+  );
   const teamAvg =
     activeOppBowlers.length > 0
       ? Math.round(
           activeOppBowlers.reduce((s, b) => s + (b.currentAverage ?? 0), 0) /
-            activeOppBowlers.length
+            activeOppBowlers.length,
         )
       : undefined;
 
@@ -119,7 +146,12 @@ function HeadToHeadCard({
               <Text style={styles.h2hTeamName} numberOfLines={1}>
                 {myTeam.name}
               </Text>
-              <Text style={[styles.h2hWins, myWins > oppWins && styles.h2hWinsLeading]}>
+              <Text
+                style={[
+                  styles.h2hWins,
+                  myWins > oppWins && styles.h2hWinsLeading,
+                ]}
+              >
                 {myWins}
               </Text>
             </View>
@@ -128,7 +160,12 @@ function HeadToHeadCard({
               <Text style={styles.h2hTeamName} numberOfLines={1}>
                 {oppTeam.name}
               </Text>
-              <Text style={[styles.h2hWins, oppWins > myWins && styles.h2hWinsLeading]}>
+              <Text
+                style={[
+                  styles.h2hWins,
+                  oppWins > myWins && styles.h2hWinsLeading,
+                ]}
+              >
                 {oppWins}
               </Text>
             </View>
@@ -157,7 +194,11 @@ function BowlerComparisonCard({
   const maxLen = Math.max(myBowlers.length, oppBowlers.length);
   if (maxLen === 0) return null;
 
-  const rows: Array<{ pos: number; mine?: MatchupBowler; theirs?: MatchupBowler }> = [];
+  const rows: Array<{
+    pos: number;
+    mine?: MatchupBowler;
+    theirs?: MatchupBowler;
+  }> = [];
   for (let i = 0; i < maxLen; i++) {
     rows.push({ pos: i + 1, mine: myBowlers[i], theirs: oppBowlers[i] });
   }
@@ -167,9 +208,13 @@ function BowlerComparisonCard({
       <Text style={styles.cardTitle}>Bowler Matchups</Text>
       {/* Column headers */}
       <View style={styles.compRow}>
-        <Text style={[styles.compName, styles.compHeaderText]}>Your Bowlers</Text>
+        <Text style={[styles.compName, styles.compHeaderText]}>
+          Your Bowlers
+        </Text>
         <Text style={[styles.compPos, styles.compHeaderText]}>#</Text>
-        <Text style={[styles.compName, styles.compHeaderText, styles.compNameRight]}>
+        <Text
+          style={[styles.compName, styles.compHeaderText, styles.compNameRight]}
+        >
           Their Bowlers
         </Text>
       </View>
@@ -181,15 +226,24 @@ function BowlerComparisonCard({
         return (
           <View key={pos} style={styles.compRow}>
             <View style={styles.compBowlerCell}>
-              <Text style={[styles.compName, myEdge && styles.compEdge]} numberOfLines={1}>
+              <Text
+                style={[styles.compName, myEdge && styles.compEdge]}
+                numberOfLines={1}
+              >
                 {mine ? mine.name : "—"}
               </Text>
-              <Text style={styles.compAvgText}>{mine ? fmtAvg(mine.currentAverage) : "—"}</Text>
+              <Text style={styles.compAvgText}>
+                {mine ? fmtAvg(mine.currentAverage) : "—"}
+              </Text>
             </View>
             <Text style={styles.compPos}>{pos}</Text>
             <View style={[styles.compBowlerCell, styles.compBowlerCellRight]}>
               <Text
-                style={[styles.compName, styles.compNameRight, theirEdge && styles.compEdge]}
+                style={[
+                  styles.compName,
+                  styles.compNameRight,
+                  theirEdge && styles.compEdge,
+                ]}
                 numberOfLines={1}
               >
                 {theirs ? theirs.name : "—"}
@@ -220,27 +274,39 @@ function AverageCalculatorCard({
   const bowler = myBowlers[selectedIdx];
   if (!bowler || bowler.totalGames === 0) return null;
 
-  const currentAvg = bowler.currentAverage ?? Math.round(bowler.totalPins / bowler.totalGames);
+  const currentAvg =
+    bowler.currentAverage ?? Math.round(bowler.totalPins / bowler.totalGames);
   const targetAvg = parseInt(targetInput, 10);
-  const validTarget = !isNaN(targetAvg) && targetAvg > currentAvg && targetAvg <= 300;
+  const validTarget =
+    !isNaN(targetAvg) && targetAvg > currentAvg && targetAvg <= 300;
 
   return (
     <View style={styles.card}>
       <Text style={styles.cardTitle}>What Do I Need to Bowl?</Text>
 
       {/* Bowler selector */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.selectorScroll}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.selectorScroll}
+      >
         {myBowlers.map((b, i) => (
           <TouchableOpacity
             key={b.id}
-            style={[styles.selectorBtn, i === selectedIdx && styles.selectorBtnActive]}
+            style={[
+              styles.selectorBtn,
+              i === selectedIdx && styles.selectorBtnActive,
+            ]}
             onPress={() => {
               setSelectedIdx(i);
               setTargetInput("");
             }}
           >
             <Text
-              style={[styles.selectorBtnText, i === selectedIdx && styles.selectorBtnTextActive]}
+              style={[
+                styles.selectorBtnText,
+                i === selectedIdx && styles.selectorBtnTextActive,
+              ]}
               numberOfLines={1}
             >
               {b.name.split(" ")[0]}
@@ -269,7 +335,11 @@ function AverageCalculatorCard({
       <Text style={styles.calcSubtitle}>Series needed to raise average:</Text>
       {[1, 3, 5].map((bump) => {
         const targetA = currentAvg + bump;
-        const seriesPins = pinsNeeded(bowler.totalPins, bowler.totalGames, targetA);
+        const seriesPins = pinsNeeded(
+          bowler.totalPins,
+          bowler.totalGames,
+          targetA,
+        );
         const newHcp = handicapFor(targetA);
         return (
           <View key={bump} style={styles.calcRow}>
@@ -301,7 +371,9 @@ function AverageCalculatorCard({
             <Text style={styles.calcRowValue}>
               {pinsNeeded(bowler.totalPins, bowler.totalGames, targetAvg)} pins
             </Text>
-            <Text style={styles.calcRowHcp}>(hcp {handicapFor(targetAvg)})</Text>
+            <Text style={styles.calcRowHcp}>
+              (hcp {handicapFor(targetAvg)})
+            </Text>
           </View>
         )}
       </View>
@@ -316,14 +388,18 @@ function AverageCalculatorCard({
 
 export function MatchupIntelligenceScreen() {
   const [week, setWeek] = useState(DEFAULT_WEEK);
-  const { preview, status, error, refresh } = useMatchupPreview(MY_TEAM_ID, week);
+  const { preview, status, error, refresh } = useMatchupPreview(
+    MY_TEAM_ID,
+    week,
+  );
 
   if (!MY_TEAM_ID) {
     return (
       <View style={styles.centered}>
         <Text style={styles.errorText}>Team not configured</Text>
         <Text style={styles.errorDetail}>
-          Set EXPO_PUBLIC_MY_TEAM_ID in your .env.local file to enable this screen.
+          Set EXPO_PUBLIC_MY_TEAM_ID in your .env.local file to enable this
+          screen.
         </Text>
       </View>
     );
@@ -341,10 +417,20 @@ export function MatchupIntelligenceScreen() {
           onPress={() => setWeek((w) => Math.max(1, w - 1))}
           disabled={week <= 1}
         >
-          <Text style={[styles.weekNavText, week <= 1 && styles.weekNavTextDisabled]}>‹</Text>
+          <Text
+            style={[
+              styles.weekNavText,
+              week <= 1 && styles.weekNavTextDisabled,
+            ]}
+          >
+            ‹
+          </Text>
         </TouchableOpacity>
         <Text style={styles.weekLabel}>Week {week}</Text>
-        <TouchableOpacity style={styles.weekNavBtn} onPress={() => setWeek((w) => w + 1)}>
+        <TouchableOpacity
+          style={styles.weekNavBtn}
+          onPress={() => setWeek((w) => w + 1)}
+        >
           <Text style={styles.weekNavText}>›</Text>
         </TouchableOpacity>
       </View>
@@ -357,7 +443,11 @@ export function MatchupIntelligenceScreen() {
         </View>
       ) : status === "error" ? (
         <View style={styles.centered}>
-          <Text style={styles.errorText}>Failed to load</Text>
+          <Text style={styles.errorText}>
+            {error.includes("No matchup found")
+              ? "No matchup this week"
+              : "Failed to load"}
+          </Text>
           <Text style={styles.errorDetail}>{error}</Text>
         </View>
       ) : preview ? (
@@ -453,7 +543,12 @@ const styles = StyleSheet.create({
   emptyNote: { color: colors.muted, fontSize: 13, fontStyle: "italic" },
 
   // Opponent card
-  oppName: { color: colors.text, fontSize: 18, fontWeight: "700", marginBottom: 4 },
+  oppName: {
+    color: colors.text,
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 4,
+  },
   oppAvg: { color: colors.muted, fontSize: 13, marginBottom: 10 },
   formSection: { marginTop: 8 },
   formLabel: { color: colors.muted, fontSize: 12, marginBottom: 4 },
@@ -483,7 +578,12 @@ const styles = StyleSheet.create({
   h2hTeamName: { color: colors.muted, fontSize: 12, marginBottom: 2 },
   h2hWins: { color: colors.text, fontSize: 32, fontWeight: "700" },
   h2hWinsLeading: { color: colors.accent },
-  h2hVs: { color: colors.muted, fontSize: 14, fontWeight: "600", marginHorizontal: 12 },
+  h2hVs: {
+    color: colors.muted,
+    fontSize: 14,
+    fontWeight: "600",
+    marginHorizontal: 12,
+  },
   meetingsLabel: { color: colors.muted, fontSize: 12, fontStyle: "italic" },
 
   // Bowler comparison card
@@ -496,11 +596,22 @@ const styles = StyleSheet.create({
   },
   compBowlerCell: { flex: 1 },
   compBowlerCellRight: { alignItems: "flex-end" },
-  compHeaderText: { color: colors.muted, fontSize: 10, fontWeight: "700", textTransform: "uppercase" },
+  compHeaderText: {
+    color: colors.muted,
+    fontSize: 10,
+    fontWeight: "700",
+    textTransform: "uppercase",
+  },
   compName: { color: colors.text, fontSize: 13, flex: 1 },
   compNameRight: { textAlign: "right" },
   compEdge: { color: colors.accent, fontWeight: "700" },
-  compPos: { color: colors.muted, fontSize: 12, fontWeight: "700", width: 24, textAlign: "center" },
+  compPos: {
+    color: colors.muted,
+    fontSize: 12,
+    fontWeight: "700",
+    width: 24,
+    textAlign: "center",
+  },
   compAvgText: { color: colors.muted, fontSize: 11 },
   compAvgRight: { textAlign: "right" },
 
@@ -514,7 +625,10 @@ const styles = StyleSheet.create({
     borderColor: colors.muted,
     marginRight: 8,
   },
-  selectorBtnActive: { borderColor: colors.accent, backgroundColor: "#e05c0020" },
+  selectorBtnActive: {
+    borderColor: colors.accent,
+    backgroundColor: "#e05c0020",
+  },
   selectorBtnText: { color: colors.muted, fontSize: 13 },
   selectorBtnTextActive: { color: colors.accent },
 
@@ -526,7 +640,12 @@ const styles = StyleSheet.create({
     padding: 8,
     alignItems: "center",
   },
-  calcStatLabel: { color: colors.muted, fontSize: 10, textTransform: "uppercase", marginBottom: 2 },
+  calcStatLabel: {
+    color: colors.muted,
+    fontSize: 10,
+    textTransform: "uppercase",
+    marginBottom: 2,
+  },
   calcStatValue: { color: colors.text, fontSize: 20, fontWeight: "700" },
 
   calcSubtitle: {
@@ -550,7 +669,12 @@ const styles = StyleSheet.create({
   calcRowValue: { color: colors.accent, fontSize: 13, fontWeight: "700" },
   calcRowHcp: { color: colors.muted, fontSize: 12 },
 
-  calcInputRow: { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 4 },
+  calcInputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginTop: 4,
+  },
   calcInput: {
     backgroundColor: colors.bg,
     borderRadius: 8,
@@ -563,5 +687,10 @@ const styles = StyleSheet.create({
     width: 80,
   },
   calcInputResult: { flexDirection: "row", alignItems: "center", gap: 6 },
-  calcNote: { color: colors.muted, fontSize: 11, fontStyle: "italic", marginTop: 8 },
+  calcNote: {
+    color: colors.muted,
+    fontSize: 11,
+    fontStyle: "italic",
+    marginTop: 8,
+  },
 });

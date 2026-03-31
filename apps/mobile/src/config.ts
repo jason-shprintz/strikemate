@@ -29,7 +29,7 @@ export const MY_TEAM_ID = process.env.EXPO_PUBLIC_MY_TEAM_ID ?? "";
  * Handicap basis (scratch score from which handicap is calculated, e.g. 200 or 220).
  * Set EXPO_PUBLIC_HANDICAP_BASIS in .env.local to match your league rules.
  */
-export const HANDICAP_BASIS = Number(process.env.EXPO_PUBLIC_HANDICAP_BASIS ?? "200");
+export const HANDICAP_BASIS = Number(process.env.EXPO_PUBLIC_HANDICAP_BASIS ?? "225");
 
 /**
  * Handicap percentage (0–1, e.g. 0.9 for 90%).

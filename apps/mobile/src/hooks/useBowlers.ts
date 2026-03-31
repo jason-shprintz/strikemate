@@ -33,6 +33,7 @@ export function useBowlers(): UseBowlersResult {
 
   useEffect(() => {
     const url = `${API_BASE}/league/bowlers?${LEAGUE_QUERY}`;
+    console.log("[useBowlers] fetching:", url);
     setStatus("loading");
     setError("");
 
@@ -52,9 +53,30 @@ export function useBowlers(): UseBowlersResult {
         }
         return r.json() as Promise<Bowler[]>;
       })
-      .then((data) => {
-        // Filter out unrostered subs — teamId "0" means no team assigned
-        const rostered = data.filter((b) => b.teamId !== "0");
+      .then((data: Array<Record<string, unknown>>) => {
+        console.log("[useBowlers] raw count:", data.length, "sample:", data[0]);
+        const rostered = data
+          .filter((b) => {
+            const teamId = b.teamId ?? b.TeamID;
+            const name = b.name ?? b.BowlerName;
+            return String(teamId) !== "0" && name != null;
+          })
+          .map((b) => {
+            const rawName = String(b.name ?? b.BowlerName ?? "");
+            // Normalize "LastName, FirstName" → "FirstName LastName" if not already mapped
+            const name =
+              !b.name && rawName.includes(", ")
+                ? rawName.replace(/^(.+),\s*(.+)$/, "$2 $1")
+                : rawName;
+            return {
+              id: String(b.id ?? b.BowlerID),
+              teamId: String(b.teamId ?? b.TeamID),
+              name,
+              teamName: String(b.teamName ?? b.TeamName ?? ""),
+              currentAverage: Number(b.currentAverage ?? b.Average ?? 0),
+            } as Bowler;
+          });
+        console.log("[useBowlers] rostered count:", rostered.length);
         setAllBowlers(rostered);
         setStatus("idle");
       })
@@ -71,7 +93,7 @@ export function useBowlers(): UseBowlersResult {
     () =>
       [...allBowlers].sort((a, b) => {
         if (sort === "average") return b.currentAverage - a.currentAverage;
-        return a.name.localeCompare(b.name);
+        return (a.name ?? "").localeCompare(b.name ?? "");
       }),
     [allBowlers, sort],
   );

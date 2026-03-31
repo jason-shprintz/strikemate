@@ -7,7 +7,11 @@ import {
   mapTeamStanding,
   deriveMatchups,
 } from "@strikemate/leaguesecretary-client";
-import type { LSBowler, LSLeagueRef, LSWeekScore } from "@strikemate/leaguesecretary-client";
+import type {
+  LSBowler,
+  LSLeagueRef,
+  LSWeekScore,
+} from "@strikemate/leaguesecretary-client";
 import type {
   HeadToHeadRecord,
   LeagueId,
@@ -28,7 +32,7 @@ export const leagueRouter = Router();
  */
 function parseLeagueRef(
   query: Record<string, unknown>,
-  requireWeekNum = true
+  requireWeekNum = true,
 ): LSLeagueRef | null {
   const { leagueId, year, season, weekNum } = query;
   if (
@@ -40,7 +44,10 @@ function parseLeagueRef(
   ) {
     return null;
   }
-  if (requireWeekNum && (typeof weekNum !== "string" || isNaN(Number(weekNum)))) {
+  if (
+    requireWeekNum &&
+    (typeof weekNum !== "string" || isNaN(Number(weekNum)))
+  ) {
     return null;
   }
   return {
@@ -60,7 +67,7 @@ async function withCache<T>(
   res: Response,
   key: string,
   ttl: number,
-  fetcher: () => Promise<T>
+  fetcher: () => Promise<T>,
 ): Promise<void> {
   try {
     const isHit = cache.get(key) !== undefined;
@@ -70,7 +77,9 @@ async function withCache<T>(
   } catch (err) {
     console.error(err);
     res.setHeader("X-Cache", "BYPASS");
-    res.status(502).json({ error: "Failed to fetch data from LeagueSecretary" });
+    res
+      .status(502)
+      .json({ error: "Failed to fetch data from LeagueSecretary" });
   }
 }
 
@@ -79,10 +88,20 @@ leagueRouter.get("/standings", async (req, res) => {
   const ref = parseLeagueRef(req.query as Record<string, unknown>);
   if (!ref) {
     res.setHeader("X-Cache", "BYPASS");
-    res.status(400).json({ error: "Required query params: leagueId, year, season, weekNum" });
+    res
+      .status(400)
+      .json({
+        error: "Required query params: leagueId, year, season, weekNum",
+      });
     return;
   }
-  const key = cacheKey("standings", ref.leagueId, ref.year, ref.season, ref.weekNum);
+  const key = cacheKey(
+    "standings",
+    ref.leagueId,
+    ref.year,
+    ref.season,
+    ref.weekNum,
+  );
   await withCache(res, key, TTL.STANDINGS, async () => {
     const raw = await fetchStandings(ref);
     return raw.map((s) => mapTeamStanding(s, String(ref.leagueId) as LeagueId));
@@ -94,10 +113,20 @@ leagueRouter.get("/bowlers", async (req, res) => {
   const ref = parseLeagueRef(req.query as Record<string, unknown>);
   if (!ref) {
     res.setHeader("X-Cache", "BYPASS");
-    res.status(400).json({ error: "Required query params: leagueId, year, season, weekNum" });
+    res
+      .status(400)
+      .json({
+        error: "Required query params: leagueId, year, season, weekNum",
+      });
     return;
   }
-  const key = cacheKey("bowlers", ref.leagueId, ref.year, ref.season, ref.weekNum);
+  const key = cacheKey(
+    "bowlers",
+    ref.leagueId,
+    ref.year,
+    ref.season,
+    ref.weekNum,
+  );
   await withCache(res, key, TTL.STANDINGS, async () => {
     const raw = await fetchBowlerList(ref);
     return raw.map((b) => mapBowler(b, String(ref.leagueId) as LeagueId));
@@ -111,14 +140,27 @@ leagueRouter.get("/scores/:weekNumber", async (req, res) => {
   const weekNumber = Number(req.params.weekNumber);
   if (!ref || isNaN(weekNumber)) {
     res.setHeader("X-Cache", "BYPASS");
-    res.status(400).json({ error: "Required query params: leagueId, year, season" });
+    res
+      .status(400)
+      .json({ error: "Required query params: leagueId, year, season" });
     return;
   }
-  const key = cacheKey("scores", ref.leagueId, ref.year, ref.season, weekNumber);
+  const key = cacheKey(
+    "scores",
+    ref.leagueId,
+    ref.year,
+    ref.season,
+    weekNumber,
+  );
   await withCache(res, key, TTL.SCORES, async () => {
-    const raw = await fetchWeekScores({ ...ref, weekNum: weekNumber }, weekNumber);
+    const raw = await fetchWeekScores(
+      { ...ref, weekNum: weekNumber },
+      weekNumber,
+    );
     const weekId = `${ref.leagueId}-w${weekNumber}` as WeekId;
-    return raw.map((s) => mapSeries(s, String(ref.leagueId) as LeagueId, weekId));
+    return raw.map((s) =>
+      mapSeries(s, String(ref.leagueId) as LeagueId, weekId),
+    );
   });
 });
 
@@ -129,12 +171,23 @@ leagueRouter.get("/matchups/:weekNumber", async (req, res) => {
   const weekNumber = Number(req.params.weekNumber);
   if (!ref || isNaN(weekNumber)) {
     res.setHeader("X-Cache", "BYPASS");
-    res.status(400).json({ error: "Required query params: leagueId, year, season" });
+    res
+      .status(400)
+      .json({ error: "Required query params: leagueId, year, season" });
     return;
   }
-  const key = cacheKey("matchups", ref.leagueId, ref.year, ref.season, weekNumber);
+  const key = cacheKey(
+    "matchups",
+    ref.leagueId,
+    ref.year,
+    ref.season,
+    weekNumber,
+  );
   await withCache(res, key, TTL.SCORES, async () => {
-    const raw = await fetchWeekScores({ ...ref, weekNum: weekNumber }, weekNumber);
+    const raw = await fetchWeekScores(
+      { ...ref, weekNum: weekNumber },
+      weekNumber,
+    );
     const weekId = `${ref.leagueId}-w${weekNumber}` as WeekId;
     return deriveMatchups(raw, String(ref.leagueId) as LeagueId, weekId);
   });
@@ -146,15 +199,25 @@ leagueRouter.get("/matchups/:weekNumber", async (req, res) => {
 const RECENT_FORM_WEEKS = 5;
 
 /** Fetches raw week scores, reusing any entry already in the shared cache. */
-async function getCachedWeekScores(ref: LSLeagueRef, weekNum: number): Promise<LSWeekScore[]> {
+async function getCachedWeekScores(
+  ref: LSLeagueRef,
+  weekNum: number,
+): Promise<LSWeekScore[]> {
   const key = cacheKey("scores", ref.leagueId, ref.year, ref.season, weekNum);
-  return cache.getOrFetch(key, TTL.SCORES, () => fetchWeekScores(ref, weekNum));
+  return cache.getOrFetch(key, TTL.SCORES, () =>
+    fetchWeekScores({ ...ref, weekNum }, weekNum),
+  );
 }
 
 /** Fetches raw bowler list, reusing any entry already in the shared cache. */
-async function getCachedBowlers(ref: LSLeagueRef, weekNum: number): Promise<LSBowler[]> {
+async function getCachedBowlers(
+  ref: LSLeagueRef,
+  weekNum: number,
+): Promise<LSBowler[]> {
   const key = cacheKey("bowlers", ref.leagueId, ref.year, ref.season, weekNum);
-  return cache.getOrFetch(key, TTL.STANDINGS, () => fetchBowlerList({ ...ref, weekNum }));
+  return cache.getOrFetch(key, TTL.STANDINGS, () =>
+    fetchBowlerList({ ...ref, weekNum }),
+  );
 }
 
 /**
@@ -165,16 +228,27 @@ async function getCachedBowlers(ref: LSLeagueRef, weekNum: number): Promise<LSBo
 function computeMatchupPoints(
   scores: LSWeekScore[],
   homeTeamId: string,
-  awayTeamId: string
+  awayTeamId: string,
 ): [homePoints: number, awayPoints: number] {
   const homeSeries = scores.filter((s) => String(s.TeamID) === homeTeamId);
   const awaySeries = scores.filter((s) => String(s.TeamID) === awayTeamId);
 
-  function teamGameHandicapTotal(series: LSWeekScore[], gameIdx: 1 | 2 | 3): number {
+  function teamGameHandicapTotal(
+    series: LSWeekScore[],
+    gameIdx: 1 | 2 | 3,
+  ): number {
     return series.reduce((sum, s) => {
-      const type = gameIdx === 1 ? s.ScoreType1 : gameIdx === 2 ? s.ScoreType2 : s.ScoreType3;
-      const score = gameIdx === 1 ? s.Score1 : gameIdx === 2 ? s.Score2 : s.Score3;
-      return type === "S" || type === "I" ? sum + score + s.HandicapBeforeBowling : sum;
+      const type =
+        gameIdx === 1
+          ? s.ScoreType1
+          : gameIdx === 2
+            ? s.ScoreType2
+            : s.ScoreType3;
+      const score =
+        gameIdx === 1 ? s.Score1 : gameIdx === 2 ? s.Score2 : s.Score3;
+      return type === "S" || type === "I"
+        ? sum + score + s.HandicapBeforeBowling
+        : sum;
     }, 0);
   }
 
@@ -187,8 +261,14 @@ function computeMatchupPoints(
     else if (awayGame > homeGame) ap++;
   }
 
-  const homeSeriesTotal = homeSeries.reduce((sum, s) => sum + s.HandicapSeriesTotal, 0);
-  const awaySeriesTotal = awaySeries.reduce((sum, s) => sum + s.HandicapSeriesTotal, 0);
+  const homeSeriesTotal = homeSeries.reduce(
+    (sum, s) => sum + s.HandicapSeriesTotal,
+    0,
+  );
+  const awaySeriesTotal = awaySeries.reduce(
+    (sum, s) => sum + s.HandicapSeriesTotal,
+    0,
+  );
   if (homeSeriesTotal > awaySeriesTotal) hp++;
   else if (awaySeriesTotal > homeSeriesTotal) ap++;
 
@@ -203,7 +283,7 @@ function computeMatchupPoints(
 async function buildMatchupPreview(
   ref: LSLeagueRef,
   weekNumber: number,
-  teamId: TeamId
+  teamId: TeamId,
 ): Promise<MatchupPreview> {
   const leagueId = String(ref.leagueId) as LeagueId;
   const weekId = `${ref.leagueId}-w${weekNumber}` as WeekId;
@@ -218,10 +298,12 @@ async function buildMatchupPreview(
   const weekMatchups = deriveMatchups(currentScores, leagueId, weekId);
 
   const matchup = weekMatchups.find(
-    (m) => m.homeTeamId === teamId || m.awayTeamId === teamId
+    (m) => m.homeTeamId === teamId || m.awayTeamId === teamId,
   );
   if (!matchup) {
-    throw new Error(`NOT_FOUND:No matchup found for team ${teamId} in week ${weekNumber}`);
+    throw new Error(
+      `NOT_FOUND:No matchup found for team ${teamId} in week ${weekNumber}`,
+    );
   }
 
   // Build Team objects from bowler roster data
@@ -229,8 +311,16 @@ async function buildMatchupPreview(
     bowlers.find((b) => String(b.TeamID) === tId && b.TeamID !== 0)?.TeamName ??
     `Team ${tId}`;
 
-  const homeTeam: Team = { id: matchup.homeTeamId, leagueId, name: findTeamName(matchup.homeTeamId) };
-  const awayTeam: Team = { id: matchup.awayTeamId, leagueId, name: findTeamName(matchup.awayTeamId) };
+  const homeTeam: Team = {
+    id: matchup.homeTeamId,
+    leagueId,
+    name: findTeamName(matchup.homeTeamId),
+  };
+  const awayTeam: Team = {
+    id: matchup.awayTeamId,
+    leagueId,
+    name: findTeamName(matchup.awayTeamId),
+  };
 
   // Sort each team's bowlers by roster position for position-by-position comparison
   const toBowlers = (tId: string) =>
@@ -250,7 +340,7 @@ async function buildMatchupPreview(
       } catch {
         return { weekNum: w, scores: [] as LSWeekScore[] };
       }
-    })
+    }),
   );
 
   const headToHead: HeadToHeadRecord = {
@@ -273,11 +363,17 @@ async function buildMatchupPreview(
     // Head-to-head: check if these two specific teams played each other
     const h2hMatch = prevMatchups.find(
       (m) =>
-        (m.homeTeamId === matchup.homeTeamId && m.awayTeamId === matchup.awayTeamId) ||
-        (m.homeTeamId === matchup.awayTeamId && m.awayTeamId === matchup.homeTeamId)
+        (m.homeTeamId === matchup.homeTeamId &&
+          m.awayTeamId === matchup.awayTeamId) ||
+        (m.homeTeamId === matchup.awayTeamId &&
+          m.awayTeamId === matchup.homeTeamId),
     );
     if (h2hMatch) {
-      const [hp, ap] = computeMatchupPoints(scores, h2hMatch.homeTeamId, h2hMatch.awayTeamId);
+      const [hp, ap] = computeMatchupPoints(
+        scores,
+        h2hMatch.homeTeamId,
+        h2hMatch.awayTeamId,
+      );
       const teamAPoints = h2hMatch.homeTeamId === matchup.homeTeamId ? hp : ap;
       const teamBPoints = h2hMatch.homeTeamId === matchup.homeTeamId ? ap : hp;
       headToHead.meetings.push({ weekId: wId, teamAPoints, teamBPoints });
@@ -287,19 +383,35 @@ async function buildMatchupPreview(
 
     // Recent form: track each team's points regardless of opponent
     const homeMatch = prevMatchups.find(
-      (m) => m.homeTeamId === matchup.homeTeamId || m.awayTeamId === matchup.homeTeamId
+      (m) =>
+        m.homeTeamId === matchup.homeTeamId ||
+        m.awayTeamId === matchup.homeTeamId,
     );
     if (homeMatch) {
-      const [hp, ap] = computeMatchupPoints(scores, homeMatch.homeTeamId, homeMatch.awayTeamId);
-      homeWeeklyPoints.push(homeMatch.homeTeamId === matchup.homeTeamId ? hp : ap);
+      const [hp, ap] = computeMatchupPoints(
+        scores,
+        homeMatch.homeTeamId,
+        homeMatch.awayTeamId,
+      );
+      homeWeeklyPoints.push(
+        homeMatch.homeTeamId === matchup.homeTeamId ? hp : ap,
+      );
     }
 
     const awayMatch = prevMatchups.find(
-      (m) => m.homeTeamId === matchup.awayTeamId || m.awayTeamId === matchup.awayTeamId
+      (m) =>
+        m.homeTeamId === matchup.awayTeamId ||
+        m.awayTeamId === matchup.awayTeamId,
     );
     if (awayMatch) {
-      const [hp, ap] = computeMatchupPoints(scores, awayMatch.homeTeamId, awayMatch.awayTeamId);
-      awayWeeklyPoints.push(awayMatch.homeTeamId === matchup.awayTeamId ? hp : ap);
+      const [hp, ap] = computeMatchupPoints(
+        scores,
+        awayMatch.homeTeamId,
+        awayMatch.awayTeamId,
+      );
+      awayWeeklyPoints.push(
+        awayMatch.homeTeamId === matchup.awayTeamId ? hp : ap,
+      );
     }
   }
 
@@ -323,7 +435,12 @@ leagueRouter.get("/matchup-preview", async (req, res) => {
   const { weekNum: weekNumRaw, teamId } = req.query as Record<string, unknown>;
   const weekNumber = Number(weekNumRaw);
 
-  if (!ref || isNaN(weekNumber) || weekNumber < 1 || typeof teamId !== "string") {
+  if (
+    !ref ||
+    isNaN(weekNumber) ||
+    weekNumber < 1 ||
+    typeof teamId !== "string"
+  ) {
     res.setHeader("X-Cache", "BYPASS");
     res.status(400).json({
       error: "Required query params: leagueId, year, season, weekNum, teamId",
@@ -336,7 +453,7 @@ leagueRouter.get("/matchup-preview", async (req, res) => {
   try {
     const isHit = cache.get(key) !== undefined;
     const preview = await cache.getOrFetch(key, TTL.SCORES, () =>
-      buildMatchupPreview(ref, weekNumber, teamId as TeamId)
+      buildMatchupPreview(ref, weekNumber, teamId as TeamId),
     );
     res.setHeader("X-Cache", isHit ? "HIT" : "MISS");
     res.json(preview);
@@ -346,7 +463,9 @@ leagueRouter.get("/matchup-preview", async (req, res) => {
       res.status(404).json({ error: err.message.slice("NOT_FOUND:".length) });
     } else {
       console.error(err);
-      res.status(502).json({ error: "Failed to fetch data from LeagueSecretary" });
+      res
+        .status(502)
+        .json({ error: "Failed to fetch data from LeagueSecretary" });
     }
   }
 });

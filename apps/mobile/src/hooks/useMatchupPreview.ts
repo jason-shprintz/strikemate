@@ -48,7 +48,7 @@ export interface MatchupPreviewData {
   };
 }
 
-export type FetchStatus = "loading" | "idle" | "error";
+export type FetchStatus = "loading" | "idle" | "error" | "not-found";
 
 export interface UseMatchupPreviewResult {
   preview: MatchupPreviewData | null;
@@ -59,7 +59,10 @@ export interface UseMatchupPreviewResult {
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 
-export function useMatchupPreview(teamId: string, weekNum: number): UseMatchupPreviewResult {
+export function useMatchupPreview(
+  teamId: string,
+  weekNum: number,
+): UseMatchupPreviewResult {
   const [preview, setPreview] = useState<MatchupPreviewData | null>(null);
   const [status, setStatus] = useState<FetchStatus>("loading");
   const [error, setError] = useState("");
@@ -76,6 +79,7 @@ export function useMatchupPreview(teamId: string, weekNum: number): UseMatchupPr
 
     setStatus("loading");
     setError("");
+    setPreview(null);
 
     const controller = new AbortController();
 
@@ -83,9 +87,11 @@ export function useMatchupPreview(teamId: string, weekNum: number): UseMatchupPr
     params.set("weekNum", String(weekNum));
     params.set("teamId", teamId);
     const url = `${API_BASE}/league/matchup-preview?${params.toString()}`;
+    console.log("[useMatchupPreview] fetching:", url);
 
     fetch(url, { signal: controller.signal })
       .then(async (r) => {
+        console.log("[useMatchupPreview] response status:", r.status);
         if (!r.ok) {
           let message = `HTTP ${r.status}`;
           try {
@@ -94,7 +100,7 @@ export function useMatchupPreview(teamId: string, weekNum: number): UseMatchupPr
           } catch {
             // Ignore JSON parse errors
           }
-          throw new Error(message);
+          throw Object.assign(new Error(message), { status: r.status });
         }
         return r.json() as Promise<MatchupPreviewData>;
       })
@@ -104,8 +110,12 @@ export function useMatchupPreview(teamId: string, weekNum: number): UseMatchupPr
       })
       .catch((e: unknown) => {
         if (e instanceof Error && e.name === "AbortError") return;
-        setError(e instanceof Error ? e.message : "Unknown error");
-        setStatus("error");
+        const msg = e instanceof Error ? e.message : "Unknown error";
+        console.log("[useMatchupPreview] error:", msg, e);
+        setError(msg);
+        setStatus(
+          (e as { status?: number }).status === 404 ? "not-found" : "error",
+        );
       });
 
     return () => controller.abort();

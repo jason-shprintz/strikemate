@@ -12,6 +12,13 @@ import { colors } from "../theme";
 export function StandingsScreen() {
   const { standings, status, error, refresh } = useStandings();
 
+  if (standings.length > 0) {
+    console.log(
+      "[StandingsScreen] teams:",
+      standings.map((t) => ({ teamId: t.teamId, teamName: t.teamName })),
+    );
+  }
+
   if (status === "loading" && standings.length === 0) {
     return (
       <View style={styles.centered}>
