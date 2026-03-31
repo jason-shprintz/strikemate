@@ -4,9 +4,16 @@ import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BowlersScreen } from "./src/screens/BowlersScreen";
 import { StandingsScreen } from "./src/screens/StandingsScreen";
+import { WeeklyRecapScreen } from "./src/screens/WeeklyRecapScreen";
 import { colors } from "./src/theme";
 
-type Tab = "standings" | "bowlers";
+type Tab = "standings" | "bowlers" | "recap";
+
+const TABS: { key: Tab; label: string }[] = [
+  { key: "standings", label: "Standings" },
+  { key: "bowlers", label: "Bowlers" },
+  { key: "recap", label: "Recap" },
+];
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("standings");
@@ -23,34 +30,30 @@ export default function App() {
 
       {/* Tab bar */}
       <View style={styles.tabs}>
-        <TouchableOpacity
-          style={[styles.tab, tab === "standings" && styles.tabActive]}
-          onPress={() => setTab("standings")}
-        >
-          <Text
-            style={[
-              styles.tabText,
-              tab === "standings" && styles.tabTextActive,
-            ]}
+        {TABS.map(({ key, label }) => (
+          <TouchableOpacity
+            key={key}
+            style={[styles.tab, tab === key && styles.tabActive]}
+            onPress={() => setTab(key)}
           >
-            Standings
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, tab === "bowlers" && styles.tabActive]}
-          onPress={() => setTab("bowlers")}
-        >
-          <Text
-            style={[styles.tabText, tab === "bowlers" && styles.tabTextActive]}
-          >
-            Bowlers
-          </Text>
-        </TouchableOpacity>
+            <Text
+              style={[styles.tabText, tab === key && styles.tabTextActive]}
+            >
+              {label}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       {/* Screen content */}
       <View style={styles.content}>
-        {tab === "standings" ? <StandingsScreen /> : <BowlersScreen />}
+        {tab === "standings" ? (
+          <StandingsScreen />
+        ) : tab === "bowlers" ? (
+          <BowlersScreen />
+        ) : (
+          <WeeklyRecapScreen />
+        )}
       </View>
     </SafeAreaView>
   );
