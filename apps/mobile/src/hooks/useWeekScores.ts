@@ -82,8 +82,9 @@ const GAMES_PER_SERIES = 3;
 
 /**
  * Computes the handicap total for one game across a team's bowlers.
- * Absent bowlers (undefined game score) are excluded — they contribute via
- * their handicapTotal at the series level but not per-game.
+ * Absent bowlers (identified here by an undefined game score) are excluded
+ * entirely from this per-game total; the API represents absent series as 0
+ * totals, so they do not indirectly contribute via series handicap either.
  */
 function teamGameHandicapTotal(
   bowlers: BowlerScore[],
@@ -133,6 +134,14 @@ export function useWeekScores(weekNumber: number): UseWeekScoresResult {
 
   const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
+  // Clear stale matchups when the week changes so the full-screen spinner is
+  // shown instead of a momentary flash of the previous week's data.
+  // A pull-to-refresh (refreshKey increment only) intentionally does not clear
+  // so the existing cards remain visible behind the RefreshControl indicator.
+  useEffect(() => {
+    setMatchups([]);
+  }, [weekNumber]);
+
   useEffect(() => {
     setStatus("loading");
     setError("");
@@ -155,9 +164,14 @@ export function useWeekScores(weekNumber: number): UseWeekScoresResult {
       return r.json() as Promise<T>;
     }
 
-    const bowlersUrl = `${API_BASE}/league/bowlers?${LEAGUE_QUERY}`;
-    const scoresUrl = `${API_BASE}/league/scores/${weekNumber}?${LEAGUE_QUERY}`;
-    const matchupsUrl = `${API_BASE}/league/matchups/${weekNumber}?${LEAGUE_QUERY}`;
+    // Override weekNum so all three requests are aligned to the selected week.
+    const leagueParams = new URLSearchParams(LEAGUE_QUERY);
+    leagueParams.set("weekNum", String(weekNumber));
+    const leagueQueryForWeek = leagueParams.toString();
+
+    const bowlersUrl = `${API_BASE}/league/bowlers?${leagueQueryForWeek}`;
+    const scoresUrl = `${API_BASE}/league/scores/${weekNumber}?${leagueQueryForWeek}`;
+    const matchupsUrl = `${API_BASE}/league/matchups/${weekNumber}?${leagueQueryForWeek}`;
 
     Promise.all([
       fetchJson<RawBowler[]>(bowlersUrl),
@@ -183,13 +197,20 @@ export function useWeekScores(weekNumber: number): UseWeekScoresResult {
           status: s.status,
         });
 
+        // Pre-group scores by teamId for O(1) lookups per matchup.
+        const scoresByTeamId = new Map<string, RawSeries[]>();
+        for (const s of scores) {
+          const existing = scoresByTeamId.get(s.teamId);
+          if (existing) {
+            existing.push(s);
+          } else {
+            scoresByTeamId.set(s.teamId, [s]);
+          }
+        }
+
         const result: MatchupRecap[] = rawMatchups.map((m) => {
-          const homeBowlers = scores
-            .filter((s) => s.teamId === m.homeTeamId)
-            .map(toBowlerScore);
-          const awayBowlers = scores
-            .filter((s) => s.teamId === m.awayTeamId)
-            .map(toBowlerScore);
+          const homeBowlers = (scoresByTeamId.get(m.homeTeamId) ?? []).map(toBowlerScore);
+          const awayBowlers = (scoresByTeamId.get(m.awayTeamId) ?? []).map(toBowlerScore);
 
           const homeBase = {
             teamId: m.homeTeamId,
