@@ -110,6 +110,89 @@ npx expo start
 
 Scan the QR code with the **Expo Go** app on your phone. Both should be on the same WiFi network.
 
+## Deploying the API
+
+The `apps/api` service can be deployed to any Node.js hosting provider.
+Railway is the recommended option — it has a free tier and supports
+npm workspace monorepos natively.
+
+### Railway (recommended)
+
+1. Create a free account at <https://railway.app> and install the CLI:
+
+   ```bash
+   npm install -g @railway/cli
+   railway login
+   ```
+
+2. From the repo root, create a new project and link it:
+
+   ```bash
+   railway init         # creates a new project
+   railway link         # links this directory to the project
+   ```
+
+3. Set the root directory, build command, and start command in the Railway
+   dashboard (or via `railway.toml` — see below):
+
+   | Setting | Value |
+   | --- | --- |
+   | Root directory | `/` (repo root) |
+   | Build command | *(leave empty — `tsx` runs TypeScript directly at startup, no compilation step needed)* |
+   | Start command | `npm start -w @strikemate/api` |
+
+4. Deploy:
+
+   ```bash
+   railway up
+   ```
+
+5. Copy the public URL that Railway assigns (e.g.
+   `https://strikemate-api-production.up.railway.app`) and paste it into
+   `apps/mobile/.env.local` as `EXPO_PUBLIC_API_BASE`.
+
+### Render / Fly.io
+
+The repo includes a `Dockerfile` at `apps/api/Dockerfile` that works with any
+container-based provider (Render, Fly.io, etc.).
+
+**Render**
+
+1. Create a new **Web Service** in the Render dashboard.
+2. Point it at this repository and set:
+
+   | Setting | Value |
+   | --- | --- |
+   | Root directory | *(repo root)* |
+   | Dockerfile path | `apps/api/Dockerfile` |
+   | Port | `3001` |
+
+**Fly.io**
+
+```bash
+cd apps/api
+fly launch --dockerfile Dockerfile   # answer prompts, pick region
+fly deploy
+```
+
+**Docker (local test before deploy)**
+
+```bash
+# Build from the repo root (required for workspace COPY steps)
+docker build -f apps/api/Dockerfile -t strikemate-api .
+
+docker run -p 3001:3001 strikemate-api
+curl http://localhost:3001/health   # should return {"status":"ok"}
+```
+
+### Pointing the mobile app at the production API
+
+After deploying, edit `apps/mobile/.env.local` and update `EXPO_PUBLIC_API_BASE`:
+
+```dotenv
+EXPO_PUBLIC_API_BASE=https://<your-deployed-url>
+```
+
 ## Useful Commands
 
 | Command | From | Description |
