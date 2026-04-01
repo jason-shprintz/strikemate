@@ -53,8 +53,10 @@ export function useBowlers(): UseBowlersResult {
         return r.json() as Promise<Bowler[]>;
       })
       .then((data) => {
-        // Filter out unrostered subs — teamId "0" means no team assigned
-        const rostered = data.filter((b) => b.teamId !== "0");
+        // Filter out unrostered subs and bowlers without a name
+        const rostered = data.filter(
+          (b) => b.teamId !== "0" && b.name != null && b.name !== "",
+        );
         setAllBowlers(rostered);
         setStatus("idle");
       })
@@ -71,7 +73,7 @@ export function useBowlers(): UseBowlersResult {
     () =>
       [...allBowlers].sort((a, b) => {
         if (sort === "average") return b.currentAverage - a.currentAverage;
-        return a.name.localeCompare(b.name);
+        return (a.name ?? "").localeCompare(b.name ?? "");
       }),
     [allBowlers, sort],
   );

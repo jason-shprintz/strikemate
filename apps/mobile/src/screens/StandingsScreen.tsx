@@ -11,7 +11,6 @@ import { colors } from "../theme";
 
 export function StandingsScreen() {
   const { standings, status, error, refresh } = useStandings();
-
   if (status === "loading" && standings.length === 0) {
     return (
       <View style={styles.centered}>

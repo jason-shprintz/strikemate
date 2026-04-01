@@ -18,3 +18,32 @@ export const DEFAULT_WEEK = (() => {
   const match = LEAGUE_QUERY.match(/(?:^|&)weekNum=(\d+)/);
   return match ? Number(match[1]) : 1;
 })();
+
+/**
+ * Your team's ID on LeagueSecretary.
+ * Set EXPO_PUBLIC_MY_TEAM_ID in .env.local to enable the Matchup Intelligence screen.
+ */
+export const MY_TEAM_ID = process.env.EXPO_PUBLIC_MY_TEAM_ID ?? "";
+
+/**
+ * Handicap basis (scratch score from which handicap is calculated, e.g. 200 or 220).
+ * Set EXPO_PUBLIC_HANDICAP_BASIS in .env.local to match your league rules.
+ */
+const DEFAULT_HANDICAP_BASIS = 225;
+export const HANDICAP_BASIS = (() => {
+  const raw = process.env.EXPO_PUBLIC_HANDICAP_BASIS;
+  const parsed = raw !== undefined ? Number(raw) : DEFAULT_HANDICAP_BASIS;
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_HANDICAP_BASIS;
+})();
+
+/**
+ * Handicap percentage (0–1, e.g. 0.9 for 90%).
+ * Set EXPO_PUBLIC_HANDICAP_PERCENT in .env.local to match your league rules.
+ */
+const DEFAULT_HANDICAP_PERCENT = 0.9;
+export const HANDICAP_PERCENT = (() => {
+  const raw = process.env.EXPO_PUBLIC_HANDICAP_PERCENT;
+  const parsed = raw !== undefined ? Number(raw) : DEFAULT_HANDICAP_PERCENT;
+  if (!Number.isFinite(parsed) || parsed < 0 || parsed > 1) return DEFAULT_HANDICAP_PERCENT;
+  return parsed;
+})();

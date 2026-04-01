@@ -3,16 +3,18 @@ import { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BowlersScreen } from "./src/screens/BowlersScreen";
+import { MatchupIntelligenceScreen } from "./src/screens/MatchupIntelligenceScreen";
 import { StandingsScreen } from "./src/screens/StandingsScreen";
 import { WeeklyRecapScreen } from "./src/screens/WeeklyRecapScreen";
 import { colors } from "./src/theme";
 
-type Tab = "standings" | "bowlers" | "recap";
+type Tab = "standings" | "bowlers" | "recap" | "matchup";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "standings", label: "Standings" },
   { key: "bowlers", label: "Bowlers" },
   { key: "recap", label: "Recap" },
+  { key: "matchup", label: "Matchup" },
 ];
 
 export default function App() {
@@ -51,8 +53,10 @@ export default function App() {
           <StandingsScreen />
         ) : tab === "bowlers" ? (
           <BowlersScreen />
-        ) : (
+        ) : tab === "recap" ? (
           <WeeklyRecapScreen />
+        ) : (
+          <MatchupIntelligenceScreen />
         )}
       </View>
     </SafeAreaView>
