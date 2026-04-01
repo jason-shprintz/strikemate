@@ -1,0 +1,42 @@
+# Dependencies — reinstalled inside the container
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+
+# Turbo cache
+.turbo/
+
+# Expo / React Native artefacts
+.expo/
+ios/Pods/
+android/.gradle/
+android/build/
+
+# Environment files (never bake secrets into the image)
+.env
+.env.local
+.env.*.local
+
+# OS artefacts
+.DS_Store
+Thumbs.db
+._*
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
